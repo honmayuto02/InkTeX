@@ -6,6 +6,7 @@ import { Toolbar } from "@/components/Toolbar";
 import { Save, RefreshCw, CheckCircle2, AlertTriangle, BookOpen } from "lucide-react";
 import katex from "katex";
 import { clsx } from "clsx";
+import { useLanguage } from "./contexts/LanguageContext";
 
 interface CalibrationModalProps {
     onClose: () => void;
@@ -43,6 +44,7 @@ const CALIBRATION_SECTIONS = [
 ];
 
 export function CalibrationModal({ onClose, onSave }: CalibrationModalProps) {
+    const { t } = useLanguage();
     const [currentSectionIdx, setCurrentSectionIdx] = useState(0);
     const [currentExampleIdx, setCurrentExampleIdx] = useState(0);
 
@@ -74,13 +76,13 @@ export function CalibrationModal({ onClose, onSave }: CalibrationModalProps) {
         } else {
             // End of section, try next section
             if (currentSectionIdx < CALIBRATION_SECTIONS.length - 1) {
-                if (confirm(`${currentSection.title}セクションが完了しました！次のセクションへ進みますか？`)) {
+                if (confirm(t("msg.cal_next_section"))) {
                     setCurrentSectionIdx(prev => prev + 1);
                     setCurrentExampleIdx(0);
                 }
             } else {
                 // All done
-                addToToast("すべてのキャリブレーションが完了しました！");
+                addToToast(t("msg.cal_complete"));
                 setTimeout(onClose, 1500);
             }
         }
@@ -97,7 +99,7 @@ export function CalibrationModal({ onClose, onSave }: CalibrationModalProps) {
     };
 
     const handleClear = () => {
-        if (confirm("キャンバスを消去しますか？")) {
+        if (confirm(t("msg.clear_confirm"))) {
             const canvas = canvasRef.current as any;
             if (canvas && canvas.reset) canvas.reset();
         }
@@ -136,7 +138,7 @@ export function CalibrationModal({ onClose, onSave }: CalibrationModalProps) {
             // Let's Just Save.
 
             localStorage.setItem("inktext_calibration", dataUrl);
-            addToToast("学習データを保存しました！");
+            addToToast(t("msg.cal_saved"));
 
             // Auto-clear and next
             if (canvas && canvas.reset) canvas.reset();
@@ -144,14 +146,14 @@ export function CalibrationModal({ onClose, onSave }: CalibrationModalProps) {
             onSave(); // Trigger parent refresh if needed
         } catch (e) {
             console.error("Storage failed", e);
-            alert("保存に失敗しました。ストレージ容量が足りない可能性があります。");
+            alert(t("msg.cal_storage_error"));
         }
     };
 
     const handleClearCalibration = () => {
-        if (confirm("学習データを初期化しますか？")) {
+        if (confirm(t("msg.cal_reset_confirm"))) {
             localStorage.removeItem("inktext_calibration");
-            addToToast("学習データを削除しました。");
+            addToToast(t("msg.cal_reset"));
             onSave();
         }
     };
@@ -174,8 +176,8 @@ export function CalibrationModal({ onClose, onSave }: CalibrationModalProps) {
                             <BookOpen size={20} />
                         </div>
                         <div>
-                            <h2 className="text-lg font-bold text-slate-800 leading-tight">キャリブレーション</h2>
-                            <p className="text-xs text-slate-500">AIにあなたの筆跡を学習させます</p>
+                            <h2 className="text-lg font-bold text-slate-800 leading-tight">{t("cal.title")}</h2>
+                            <p className="text-xs text-slate-500">{t("cal.desc")}</p>
                         </div>
                     </div>
 
@@ -200,7 +202,7 @@ export function CalibrationModal({ onClose, onSave }: CalibrationModalProps) {
 
                     <div className="flex items-center gap-2 z-10 bg-slate-50 pl-4">
                         <button onClick={onClose} className="px-4 py-2 bg-slate-200 hover:bg-slate-300 rounded-lg text-sm font-bold text-slate-700 transition-colors">
-                            閉じる
+                            {t("cal.close")}
                         </button>
                     </div>
                 </div>
@@ -212,7 +214,7 @@ export function CalibrationModal({ onClose, onSave }: CalibrationModalProps) {
 
                         {/* Section Selector */}
                         <div className="p-4 space-y-2 overflow-y-auto max-h-[40vh] border-b border-slate-200">
-                            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">セクション選択</h3>
+                            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">{t("cal.section_select")}</h3>
                             {CALIBRATION_SECTIONS.map((section, idx) => (
                                 <button
                                     key={section.id}
@@ -228,11 +230,11 @@ export function CalibrationModal({ onClose, onSave }: CalibrationModalProps) {
                                     )}
                                 >
                                     <div className="flex justify-between items-center mb-1">
-                                        <span>{section.title}</span>
+                                        <span>{t(`cal.sec.${section.id}`)}</span>
                                         {currentSectionIdx > idx && <CheckCircle2 size={14} className="text-green-500" />}
                                     </div>
                                     <div className="text-[10px] text-slate-400 line-clamp-1">
-                                        {section.description}
+                                        {t(`cal.desc.${section.id}`)}
                                     </div>
                                 </button>
                             ))}
@@ -241,14 +243,14 @@ export function CalibrationModal({ onClose, onSave }: CalibrationModalProps) {
                         {/* Current Example View */}
                         <div className="p-6 flex flex-col gap-4 overflow-y-auto flex-1 bg-white">
                             <div>
-                                <h3 className="font-bold text-slate-800 text-lg mb-1">{currentSection.title}</h3>
-                                <p className="text-sm text-slate-500">{currentSection.description}</p>
+                                <h3 className="font-bold text-slate-800 text-lg mb-1">{t(`cal.sec.${currentSection.id}`)}</h3>
+                                <p className="text-sm text-slate-500">{t(`cal.desc.${currentSection.id}`)}</p>
                             </div>
 
                             <div className="flex items-center justify-between text-xs font-mono text-slate-400">
-                                <span>Example {currentExampleIdx + 1}/{currentSection.examples.length}</span>
+                                <span>{t("cal.example")} {currentExampleIdx + 1}/{currentSection.examples.length}</span>
                                 <button onClick={handleNextExample} className="hover:text-blue-500 flex items-center gap-1">
-                                    <RefreshCw size={12} /> Skip
+                                    <RefreshCw size={12} /> {t("cal.skip")}
                                 </button>
                             </div>
 
@@ -262,14 +264,14 @@ export function CalibrationModal({ onClose, onSave }: CalibrationModalProps) {
                                     className="w-full py-3 bg-[#28426d] text-white rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-[#1e3252] transition-all shadow-md active:scale-95"
                                 >
                                     <Save size={18} />
-                                    <span>保存して次へ</span>
+                                    {t("cal.save_next")}
                                 </button>
                                 <button
                                     onClick={handleClearCalibration}
                                     className="w-full py-2 text-red-400 hover:text-red-600 text-xs flex items-center justify-center gap-1 hover:bg-red-50 rounded-lg transition-colors"
                                 >
                                     <AlertTriangle size={12} />
-                                    学習データをリセット
+                                    {t("cal.reset_data")}
                                 </button>
                             </div>
                         </div>
@@ -279,7 +281,7 @@ export function CalibrationModal({ onClose, onSave }: CalibrationModalProps) {
                     <div className="flex-1 relative bg-[#f9f9f9] cursor-crosshair overflow-hidden flex flex-col">
                         <div className="absolute top-4 left-4 z-10 bg-white/90 backdrop-blur px-4 py-2 rounded-full text-xs font-bold text-slate-500 shadow-sm border border-slate-200 pointer-events-none flex items-center gap-2">
                             <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
-                            ここに大きく書いてください
+                            {t("cal.area_label")}
                         </div>
 
                         <div className="flex-1 relative" style={{

@@ -5,10 +5,14 @@ import Canvas from "@/components/Canvas";
 import { Toolbar } from "@/components/Toolbar";
 import { ResultDisplay } from "@/components/ResultDisplay";
 import { ErrorPopup } from "@/components/ErrorPopup";
-import { Settings, Smartphone } from "lucide-react";
+import { Settings, Smartphone, PenTool } from "lucide-react";
 import { CalibrationModal } from "@/components/CalibrationModal";
+import { SettingsModal } from "@/components/SettingsModal";
+import { useLanguage } from "@/components/contexts/LanguageContext";
+import { clsx } from "clsx";
 
 export default function Home() {
+  const { t, lang, setLang } = useLanguage();
   const [tool, setTool] = useState<"pen" | "eraser">("pen");
   const [penSize, setPenSize] = useState(4);
   const [eraserSize, setEraserSize] = useState(20);
@@ -22,6 +26,7 @@ export default function Home() {
   const [isConverting, setIsConverting] = useState(false);
   const [latexResult, setLatexResult] = useState<string>("");
   const [showCalibration, setShowCalibration] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -47,13 +52,14 @@ export default function Home() {
           await new Promise(r => setTimeout(r, delay));
           return callGeminiWithRetry(formData, retries - 1, delay * 2);
         } else {
-          throw new Error("アクセス集中によりAIが応答できません。しばらく待ってから再試行してください。");
+          // Explicit message for rate limit
+          throw new Error("RATE_LIMIT");
         }
       }
 
       if (!res.ok) {
         const errData = await res.json();
-        throw new Error(errData.error || "APIリクエストに失敗しました。");
+        throw new Error(errData.error || t("err.unexpected"));
       }
 
       return await res.json();
@@ -111,11 +117,16 @@ export default function Home() {
 
       // Use retry helper
       const data = await callGeminiWithRetry(formData);
-      setLatexResult(data.latex || "結果が見つかりませんでした。");
+      setLatexResult(data.latex || "No result");
 
     } catch (error: any) {
       console.error("Conversion failed:", error);
-      setErrorMsg(error.message || "予期せぬエラーが発生しました。");
+      // Translate known errors
+      if (error.message === "RATE_LIMIT") {
+        setErrorMsg(t("err.rate_limit_msg"));
+      } else {
+        setErrorMsg(error.message || t("err.unexpected"));
+      }
     } finally {
       setIsConverting(false);
     }
@@ -165,42 +176,56 @@ export default function Home() {
             Wait, current Toolbar component has everything mixed.
             Let's keep the Toolbar component as the "Secondary Bar" (White) and put it BELOW the header.
         */}
+        {/* Center: Language Toggle Removed (Moved to Settings) */}
         <div className="flex-1" />
 
         {/* Right: Actions */}
         <div className="flex items-center gap-3">
-          <Tooltip text="デバイス連携モード (準備中)">
+          <Tooltip text={t("tip.sync_soon")}>
             <button
-              onClick={() => alert("デバイス連携モードは現在準備中です。\nComing soon...")}
+              onClick={() => alert(t("msg.sync_unavailable"))}
               className="p-2 hover:bg-white/10 rounded-full text-white/50 cursor-not-allowed transition-all"
-              title="デバイス連携モード (Coming soon...)"
+              title={t("header.sync")}
             >
               <Smartphone size={20} />
             </button>
           </Tooltip>
+
+          {/* New Calibration Button */}
           <button
             onClick={() => setShowCalibration(true)}
+            className="p-2 hover:bg-white/10 rounded-full text-white/90 hover:text-white transition-all flex items-center gap-2"
+            title={t("header.calibration")}
+          >
+            <PenTool size={20} />
+            {/* Optional label if space permits, but user asked for "icon" mainly. Let's keep it icon based since tooltip exists */}
+          </button>
+
+          {/* Settings Button (Now opens SettingsModal) */}
+          <button
+            onClick={() => setShowSettings(true)}
             className="p-2 hover:bg-white/10 rounded-full text-white/90 hover:text-white transition-all"
-            title="設定 / 筆跡キャリブレーション"
+            title={t("header.settings")}
           >
             <Settings size={20} />
           </button>
-          <Tooltip text="アプリを完全に終了し、ウィンドウを閉じます">
+
+          <Tooltip text={t("msg.shutdown_confirm")}>
             <button
               onClick={async () => {
-                if (confirm("アプリケーションを終了しますか？")) {
+                if (confirm(t("msg.shutdown_confirm"))) {
                   try {
                     await fetch("/api/shutdown", { method: "POST" });
                     window.close();
                   } catch (e) {
-                    alert("終了できませんでした。");
+                    alert("Failed to shutdown");
                   }
                 }
               }}
               className="px-3 py-1.5 bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 rounded-lg text-red-100 hover:text-red-50 transition-all flex items-center gap-2 group"
             >
               <div className="w-2 h-2 rounded-full bg-red-500 group-hover:bg-red-400 shadow-sm" />
-              <span className="text-xs font-bold text-red-200 group-hover:text-white">終了</span>
+              <span className="text-xs font-bold text-red-200 group-hover:text-white">{t("header.shutdown")}</span>
             </button>
           </Tooltip>
         </div>
@@ -261,6 +286,13 @@ export default function Home() {
         <CalibrationModal
           onClose={() => setShowCalibration(false)}
           onSave={() => {/* No-op */ }}
+        />
+      )}
+
+      {/* Settings Modal */}
+      {showSettings && (
+        <SettingsModal
+          onClose={() => setShowSettings(false)}
         />
       )}
     </main>

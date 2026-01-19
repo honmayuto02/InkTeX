@@ -78,6 +78,8 @@ const Canvas = React.forwardRef<HTMLCanvasElement, CanvasProps>(({
         const cPos = cursorPosRef.current;
         // Show cursor if hovering (cPos exists)
         // AND (we are NOT drawing OR tool is eraser) -> Eraser should be visible while using it
+        // The condition `currentPointsRef.current.length === 0 || tool === "eraser"` already ensures
+        // the eraser cursor is drawn while dragging.
         if (cPos && (currentPointsRef.current.length === 0 || tool === "eraser")) {
             ctx.beginPath();
             ctx.arc(cPos[0], cPos[1], size / 2, 0, Math.PI * 2);

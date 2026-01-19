@@ -2,13 +2,10 @@
 
 import React, { useEffect } from "react";
 import { X, AlertTriangle } from "lucide-react";
+import { useLanguage } from "./contexts/LanguageContext";
 
-interface ErrorPopupProps {
-    message: string | null;
-    onClose: () => void;
-}
-
-export function ErrorPopup({ message, onClose }: ErrorPopupProps) {
+export function ErrorPopup({ message, onClose }: { message: string | null, onClose: () => void }) {
+    const { t } = useLanguage();
     useEffect(() => {
         if (message) {
             // Auto-dismiss after 5 seconds if desired, but user asked for "Large Popup", maybe manual close is better.

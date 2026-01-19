@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Pen, Eraser, Trash2, ArrowRightLeft, Loader2, Info } from "lucide-react";
+import { Pen, Eraser, Trash2, ArrowRightLeft, Loader2, Info, Undo2, Redo2 } from "lucide-react";
 import { clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
+import { useLanguage } from "./contexts/LanguageContext";
 
 interface ToolbarProps {
     tool: "pen" | "eraser";
@@ -64,11 +65,13 @@ export function Toolbar({
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
+    const { t } = useLanguage();
+
     return (
         <div className={twMerge("flex items-center gap-6 px-4 h-full", className)}>
             {/* Pen Tool */}
             <div className="relative flex flex-col items-center">
-                <Tooltip text="ペンツール。クリックで太さや色を変更できます。">
+                <Tooltip text={t("tip.pen")}>
                     <button
                         className={clsx(
                             "tool-btn p-2 rounded-lg transition-all flex flex-col items-center justify-center gap-1 w-16",
@@ -88,7 +91,7 @@ export function Toolbar({
                         <div className="absolute -top-2 left-1/2 -translate-x-1/2 w-4 h-4 bg-white border-t border-l border-slate-200 rotate-45" />
 
                         <div>
-                            <div className="text-xs font-bold text-slate-400 mb-2 uppercase tracking-wider">太さ</div>
+                            <div className="text-xs font-bold text-slate-400 mb-2 uppercase tracking-wider">{t("toolbar.size")}</div>
                             <div className="flex justify-between bg-slate-100 p-1 rounded-lg">
                                 {PenSizes.map(s => (
                                     <button
@@ -104,14 +107,13 @@ export function Toolbar({
                                 ))}
                             </div>
                         </div>
-                        {/* Color Placeholder Removed as requested */}
                     </div>
                 )}
             </div>
 
             {/* Eraser Tool */}
             <div className="relative flex flex-col items-center">
-                <Tooltip text="消しゴム。クリックで大きさを変更できます。">
+                <Tooltip text={t("tip.eraser")}>
                     <button
                         className={clsx(
                             "tool-btn p-2 rounded-lg transition-all flex flex-col items-center justify-center gap-1 w-16",
@@ -129,7 +131,7 @@ export function Toolbar({
                     <div className="toolbar-popup absolute top-full left-1/2 -translate-x-1/2 mt-3 bg-white rounded-xl shadow-xl border border-slate-200 p-4 w-60 z-[100] flex flex-col gap-4 animate-in fade-in slide-in-from-top-2">
                         <div className="absolute -top-2 left-1/2 -translate-x-1/2 w-4 h-4 bg-white border-t border-l border-slate-200 rotate-45" />
                         <div>
-                            <div className="text-xs font-bold text-slate-400 mb-2 uppercase tracking-wider">消しゴムの大きさ</div>
+                            <div className="text-xs font-bold text-slate-400 mb-2 uppercase tracking-wider">{t("toolbar.eraserSize")}</div>
                             <div className="flex justify-between bg-slate-100 p-1 rounded-lg">
                                 {EraserSizes.map(s => (
                                     <button
@@ -152,29 +154,29 @@ export function Toolbar({
             <div className="w-px h-8 bg-slate-200 mx-2" />
 
             {/* Undo */}
-            <Tooltip text="操作を元に戻します">
+            <Tooltip text={t("tip.undo")}>
                 <button
                     onClick={onUndo}
                     className="p-3 text-slate-500 hover:bg-slate-100 rounded-full hover:text-blue-600 transition-colors"
                 >
-                    <span className="font-bold text-xl leading-none">↶</span>
+                    <Undo2 size={24} strokeWidth={2.5} />
                 </button>
             </Tooltip>
 
             {/* Redo */}
-            <Tooltip text="操作をやり直します">
+            <Tooltip text={t("tip.redo")}>
                 <button
                     onClick={onRedo}
                     className="p-3 text-slate-500 hover:bg-slate-100 rounded-full hover:text-blue-600 transition-colors"
                 >
-                    <span className="font-bold text-xl leading-none">↷</span>
+                    <Redo2 size={24} strokeWidth={2.5} />
                 </button>
             </Tooltip>
 
             <div className="w-px h-8 bg-slate-200 mx-2" />
 
             {/* Clear */}
-            <Tooltip text="キャンバスをすべて消去します">
+            <Tooltip text={t("tip.clear")}>
                 <button
                     onClick={onClear}
                     className="p-3 text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-full transition-colors"
@@ -185,7 +187,7 @@ export function Toolbar({
 
             {/* Convert - Optional */}
             {onConvert && showConvert !== false && (
-                <Tooltip text="手書き文字をAIでLaTeX形式に変換します">
+                <Tooltip text={t("tip.convert")}>
                     <button
                         onClick={onConvert}
                         disabled={isConverting}
@@ -201,7 +203,7 @@ export function Toolbar({
                         ) : (
                             <ArrowRightLeft size={18} />
                         )}
-                        <span>変換</span>
+                        <span>{t("toolbar.convert")}</span>
                     </button>
                 </Tooltip>
             )}
