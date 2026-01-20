@@ -19,13 +19,13 @@ export async function GET(req: NextRequest) {
             createdAt: Date.now(),
             lastUpdated: Date.now(),
         };
-        store.set(newSessionId, session);
+        await store.set(newSessionId, session);
         return NextResponse.json({ sessionId: newSessionId });
     }
 
     // Poll Session (Host checks for data)
     if (sessionId) {
-        const session = store.get(sessionId);
+        const session = await store.get(sessionId);
         if (!session) {
             return NextResponse.json({ error: "Session not found" }, { status: 404 });
         }
@@ -41,7 +41,7 @@ export async function POST(req: NextRequest) {
     const sessionId = searchParams.get("sessionId");
 
     if (action === "upload" && sessionId) {
-        const session = store.get(sessionId);
+        const session = await store.get(sessionId);
         if (!session) {
             return NextResponse.json({ error: "Session not found" }, { status: 404 });
         }
@@ -62,7 +62,7 @@ export async function POST(req: NextRequest) {
 
         session.imageData = dataUrl;
         session.lastUpdated = Date.now();
-        store.set(sessionId, session);
+        await store.set(sessionId, session);
 
         return NextResponse.json({ success: true });
     }

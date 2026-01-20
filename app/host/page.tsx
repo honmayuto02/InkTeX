@@ -196,14 +196,35 @@ export default function HostPage() {
                 </div>
 
                 <div className="bg-blue-50 text-blue-800 text-xs p-4 rounded-lg w-full max-w-xs text-left">
-                    <p className="font-bold mb-2">⚠️ 接続できない場合</p>
-                    <p className="mb-2">PCのIPアドレスを入力してください：</p>
-                    <input
-                        type="text"
-                        placeholder="例: 192.168.1.5"
-                        className="w-full px-3 py-2 border border-blue-200 rounded bg-white focus:outline-none focus:ring-1 focus:ring-blue-500 font-mono"
-                        onChange={(e) => updateHostIp(e.target.value)}
-                    />
+                    {/* Only show IP input if we are on localhost OR user requests it */}
+                    {clientUrl && (clientUrl.includes("localhost") || clientUrl.includes("127.0.0.1")) ? (
+                        <>
+                            <p className="font-bold mb-2">⚠️ 接続きない場合</p>
+                            <p className="mb-2">PCのIPアドレスを入力してください：</p>
+                            <input
+                                type="text"
+                                placeholder="例: 192.168.1.5"
+                                className="w-full px-3 py-2 border border-blue-200 rounded bg-white focus:outline-none focus:ring-1 focus:ring-blue-500 font-mono"
+                                onChange={(e) => updateHostIp(e.target.value)}
+                            />
+                        </>
+                    ) : (
+                        <div className="text-center text-slate-500">
+                            <p className="mb-2">同じWi-Fi/ネットワークに接続してください</p>
+                            <details>
+                                <summary className="cursor-pointer hover:text-blue-600 underline">手動設定 (開発用)</summary>
+                                <div className="mt-2">
+                                    <p className="mb-1">PCのIPアドレス：</p>
+                                    <input
+                                        type="text"
+                                        placeholder="例: 192.168.1.5"
+                                        className="w-full px-3 py-2 border border-blue-200 rounded bg-white focus:outline-none focus:ring-1 focus:ring-blue-500 font-mono"
+                                        onChange={(e) => updateHostIp(e.target.value)}
+                                    />
+                                </div>
+                            </details>
+                        </div>
+                    )}
                 </div>
             </div>
 
