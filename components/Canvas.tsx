@@ -81,6 +81,9 @@ const Canvas = React.forwardRef<HTMLCanvasElement, CanvasProps>(({
         // The condition `currentPointsRef.current.length === 0 || tool === "eraser"` already ensures
         // the eraser cursor is drawn while dragging.
         if (cPos && (currentPointsRef.current.length === 0 || tool === "eraser")) {
+            // Reset composite operation to ensure cursor is drawn on top (not erased)
+            ctx.globalCompositeOperation = "source-over";
+
             ctx.beginPath();
             ctx.arc(cPos[0], cPos[1], size / 2, 0, Math.PI * 2);
             ctx.strokeStyle = tool === "eraser" ? "#000000" : color; // Black stroke for visibility

@@ -32,9 +32,9 @@ export default function ClientPage({ params }: { params: Promise<{ sessionId: st
         setErrorMsg(null);
 
         try {
-            const blob = await new Promise<Blob | null>((resolve) =>
-                canvasRef.current?.toBlob(resolve, 'image/png')
-            );
+            // Use custom exportImage to ensure white background
+            // @ts-ignore - Canvas triggers imperative handle with exportImage
+            const blob = await canvasRef.current.exportImage('image/png');
 
             if (!blob) throw new Error("キャンバスが空です");
 
@@ -76,39 +76,44 @@ export default function ClientPage({ params }: { params: Promise<{ sessionId: st
             </div>
 
             {/* UI Layer */}
-            <div className="absolute inset-0 z-10 pointer-events-none">
-                <div className="pointer-events-auto w-full h-full relative">
-                    {/* Reusing Toolbar component but hijacking onConvert */}
-                    <Toolbar
-                        tool={tool}
-                        setTool={setTool}
-                        size={size}
-                        setSize={setSize}
-                        onClear={handleClear}
-                        onConvert={handleSend} // client sends to host instead of direct convert
-                        isConverting={isSending}
-                        onUndo={() => {
-                            const canvas = canvasRef.current as any;
-                            if (canvas && canvas.undo) {
-                                canvas.undo();
-                            }
-                        }}
-                    />
+            <>
+                {/* Scrollable container for Toolbar if needed, or just fixed top */}
+
+                {/* ID Display - Moved to bottom left to avoid conflict with top toolbar */}
+                <div className="fixed bottom-4 left-4 z-50 pointer-events-auto bg-white/80 backdrop-blur px-3 py-1 rounded-full text-xs font-mono text-slate-500 border border-slate-200 shadow-sm">
+                    ID: {sessionId}
+                </div>
+
+                {/* Toolbar - Fixed Top Bar */}
+                <div className="fixed top-0 left-0 right-0 z-50 pointer-events-auto w-full bg-white border-b border-slate-200 pt-[env(safe-area-inset-top)] shadow-sm">
+                    <div className="max-w-3xl mx-auto">
+                        <Toolbar
+                            tool={tool}
+                            setTool={setTool}
+                            size={size}
+                            setSize={setSize}
+                            onClear={handleClear}
+                            onConvert={handleSend}
+                            isConverting={isSending}
+                            className="h-16 py-1 justify-center"
+                            onUndo={() => {
+                                const canvas = canvasRef.current as any;
+                                if (canvas && canvas.undo) {
+                                    canvas.undo();
+                                }
+                            }}
+                        />
+                    </div>
                 </div>
 
                 {/* Success Overlay */}
                 {sentSuccess && (
-                    <div className="absolute top-20 left-1/2 -translate-x-1/2 bg-green-500 text-white px-6 py-2 rounded-full shadow-lg flex items-center gap-2 animate-in fade-in slide-in-from-top-4">
+                    <div className="fixed top-20 left-1/2 -translate-x-1/2 z-[60] bg-green-500 text-white px-6 py-2 rounded-full shadow-lg flex items-center gap-2 animate-in fade-in slide-in-from-top-4">
                         <Check size={18} />
                         <span className="font-medium">ホストに送信しました</span>
                     </div>
                 )}
-
-                {/* Session Info (Discreet) */}
-                <div className="absolute bottom-4 left-4 text-xs text-slate-300 font-mono pointer-events-auto">
-                    ID: {sessionId}
-                </div>
-            </div>
+            </>
         </main>
     );
 }

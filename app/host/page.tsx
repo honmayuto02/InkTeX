@@ -3,17 +3,28 @@
 import React, { useEffect, useState } from "react";
 import { QRCodeSVG } from "qrcode.react";
 import { ResultDisplay } from "@/components/ResultDisplay";
-import { Loader2 } from "lucide-react";
+import { Loader2, Maximize2, Minimize2 } from "lucide-react";
 
 import { ErrorPopup } from "@/components/ErrorPopup";
 
 export default function HostPage() {
     const [sessionId, setSessionId] = useState<string | null>(null);
     const [clientUrl, setClientUrl] = useState<string>("");
-    const [latexResult, setLatexResult] = useState<string>("");
+
+    // History State
+    interface HistoryItem {
+        id: string;
+        latex: string;
+        timestamp: number;
+        isPinned: boolean;
+    }
+    const [history, setHistory] = useState<HistoryItem[]>([]);
+    const MAX_HISTORY = 10;
+
     const [lastUpdated, setLastUpdated] = useState<number>(0);
     const [loading, setLoading] = useState(true);
     const [errorMsg, setErrorMsg] = useState<string | null>(null);
+    const [processing, setProcessing] = useState(false);
 
     // Initialize Session
     useEffect(() => {
@@ -26,12 +37,6 @@ export default function HostPage() {
                 // Detect localhost and warn/suggest
                 const host = window.location.hostname;
                 let baseUrl = window.location.origin;
-
-                if (host === "localhost" || host === "127.0.0.1") {
-                    // Try to guess? We can't. Just default to localhost but show UI to change it.
-                    // For now, set it, but we'll add an input to override it.
-                }
-
                 setClientUrl(`${baseUrl}/client/${data.sessionId}`);
                 setLoading(false);
             } catch (e) {
@@ -88,12 +93,11 @@ export default function HostPage() {
     };
 
     const processImage = async (dataUrl: string) => {
-        // Convert DataURL to Blob
+        setProcessing(true);
         try {
             const res = await fetch(dataUrl);
             const blob = await res.blob();
 
-            // Call Gemini
             const formData = new FormData();
             formData.append("image", blob);
 
@@ -101,7 +105,7 @@ export default function HostPage() {
             const apiData = await apiRes.json();
 
             if (apiData.latex) {
-                setLatexResult(apiData.latex);
+                addToHistory(apiData.latex);
             } else if (apiData.error) {
                 setErrorMsg(`変換エラー: ${apiData.error}`);
             }
@@ -112,8 +116,48 @@ export default function HostPage() {
             } else {
                 setErrorMsg("変換処理中にエラーが発生しました。");
             }
+        } finally {
+            setProcessing(false);
         }
     };
+
+    const addToHistory = (latex: string) => {
+        setHistory(prev => {
+            const newItem: HistoryItem = {
+                id: Math.random().toString(36).substr(2, 9),
+                latex,
+                timestamp: Date.now(),
+                isPinned: false
+            };
+
+            let newHistory = [newItem, ...prev];
+
+            // Limit check & Auto-remove unpinned
+            if (newHistory.filter(i => !i.isPinned).length > MAX_HISTORY) {
+                // Remove oldest unpinned
+                // Find index of oldest unpinned
+                for (let i = newHistory.length - 1; i >= 0; i--) {
+                    if (!newHistory[i].isPinned) {
+                        newHistory.splice(i, 1);
+                        break;
+                    }
+                }
+            }
+            return newHistory;
+        });
+    };
+
+    const togglePin = (id: string) => {
+        setHistory(prev => prev.map(item =>
+            item.id === id ? { ...item, isPinned: !item.isPinned } : item
+        ));
+    };
+
+    const deleteItem = (id: string) => {
+        setHistory(prev => prev.filter(item => item.id !== id));
+    };
+
+    const [showQrPanel, setShowQrPanel] = useState(true);
 
     if (loading) {
         return (
@@ -124,49 +168,120 @@ export default function HostPage() {
     }
 
     return (
-        <main className="flex flex-col items-center justify-center min-h-screen bg-[#f9f9f9] p-8 space-y-8">
+        <main className="flex min-h-screen bg-[#f9f9f9] overflow-hidden relative">
             <ErrorPopup message={errorMsg} onClose={() => setErrorMsg(null)} />
 
-            <div className="absolute top-4 left-4 z-50">
-                <a
-                    href="/"
-                    className="p-2 bg-white/80 hover:bg-white backdrop-blur shadow-sm border border-slate-200 rounded-full text-slate-500 hover:text-slate-900 transition-all flex items-center gap-2 px-4"
-                >
-                    <span className="text-sm font-medium">← 戻る</span>
-                </a>
-            </div>
+            {/* Left Panel: Connection Info */}
+            <div
+                className={`
+                    border-r border-slate-200 bg-white p-8 flex flex-col items-center justify-center space-y-8 shadow-sm z-10 transition-all duration-300 ease-in-out
+                    ${showQrPanel ? "w-1/3 min-w-[350px] opacity-100 translate-x-0" : "w-0 min-w-0 p-0 opacity-0 -translate-x-full overflow-hidden border-none"}
+                `}
+            >
+                <div className="absolute top-4 left-4">
+                    <a href="/" className="p-2 text-slate-400 hover:text-slate-600 transition-colors flex items-center gap-1">
+                        <span className="text-sm">← 戻る</span>
+                    </a>
+                </div>
 
-            <div className="text-center space-y-2">
-                <h1 className="text-2xl font-bold text-slate-900">InkTeX ホスト (PC)</h1>
-                <p className="text-slate-500">タブレット等でQRコードを読み取って接続してください。</p>
-                <div className="bg-yellow-50 text-yellow-800 text-sm p-3 rounded-lg max-w-md mx-auto mt-2">
-                    QRコードが「localhost」の場合は、接続できない可能性があります。<br />
-                    PCのIPアドレス (例: 192.168.x.x) を入力して更新してください。
+                <div className="text-center space-y-2 min-w-[300px]">
+                    <h1 className="text-2xl font-bold text-slate-900">デバイス連携</h1>
+                    <p className="text-slate-500 text-sm">QRコードを読み取って接続</p>
+                </div>
+
+                <div className="p-4 bg-white rounded-xl shadow border border-slate-100 min-w-[200px]">
+                    {clientUrl && (
+                        <QRCodeSVG value={clientUrl} size={180} level="H" />
+                    )}
+                </div>
+
+                <div className="bg-blue-50 text-blue-800 text-xs p-4 rounded-lg w-full max-w-xs text-left">
+                    <p className="font-bold mb-2">⚠️ 接続できない場合</p>
+                    <p className="mb-2">PCのIPアドレスを入力してください：</p>
                     <input
                         type="text"
                         placeholder="例: 192.168.1.5"
-                        className="mt-2 w-full px-3 py-1 border border-yellow-300 rounded bg-white text-slate-800"
-                        onChange={(e) => updateHostIp(e.target.value || "localhost")}
+                        className="w-full px-3 py-2 border border-blue-200 rounded bg-white focus:outline-none focus:ring-1 focus:ring-blue-500 font-mono"
+                        onChange={(e) => updateHostIp(e.target.value)}
                     />
                 </div>
             </div>
 
-            <div className="p-4 bg-white rounded-xl shadow-lg border border-slate-100">
-                {clientUrl && (
-                    <QRCodeSVG value={clientUrl} size={200} level="H" />
-                )}
-            </div>
-
-            <div className="text-sm text-slate-400 font-mono bg-slate-100 px-3 py-1 rounded">
-                Session ID: {sessionId}
-            </div>
-
-            {/* Result Display - Always visible if result exists */}
-            {latexResult && (
-                <div className="w-full max-w-2xl mt-8">
-                    <ResultDisplay latex={latexResult} />
+            {/* Main Content Area (Right Panel) */}
+            <div className={`flex-1 bg-slate-50/50 p-8 flex flex-col h-screen overflow-hidden transition-all duration-300`}>
+                <div className="flex items-center justify-between mb-6">
+                    <div className="flex items-center gap-4">
+                        {/* Toggle Button */}
+                        <button
+                            onClick={() => setShowQrPanel(!showQrPanel)}
+                            className="p-2 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 text-slate-500 hover:text-slate-700 transition-all shadow-sm"
+                            title={showQrPanel ? "QRパネルを隠す" : "QRパネルを表示"}
+                        >
+                            {showQrPanel ? <Maximize2 size={18} className="rotate-90" /> : <Maximize2 size={18} className="-rotate-90" />} {/* Using icon to signify expand/collapse */}
+                        </button>
+                        <h2 className="text-xl font-bold text-slate-700">受信履歴</h2>
+                    </div>
+                    {processing && (
+                        <div className="flex items-center gap-2 text-blue-600 text-sm bg-blue-50 px-3 py-1 rounded-full animate-pulse">
+                            <Loader2 size={14} className="animate-spin" />
+                            <span>変換中...</span>
+                        </div>
+                    )}
                 </div>
-            )}
+
+                <div className="flex-1 overflow-y-auto space-y-4 pr-2 pb-20">
+                    {history.length === 0 ? (
+                        <div className="h-full flex flex-col items-center justify-center text-slate-400 space-y-4">
+                            <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center relative">
+                                {!showQrPanel && (
+                                    <div className="absolute -left-12 top-0 p-2 animate-bounce-horizontal">
+                                        ←
+                                    </div>
+                                )}
+                                <span className="text-2xl">📡</span>
+                            </div>
+                            <p>外部デバイスからの送信を待機しています...</p>
+                            {!showQrPanel && (
+                                <p className="text-xs text-slate-300">QRコードを表示するには左上のボタンを押してください</p>
+                            )}
+                        </div>
+                    ) : (
+                        history.map((item) => (
+                            <div key={item.id} className={`group bg-white rounded-xl shadow-sm border transition-all ${item.isPinned ? 'border-blue-300 ring-1 ring-blue-100' : 'border-slate-200 hover:border-blue-200'}`}>
+                                <div className="p-3">
+                                    <div className="flex items-start justify-between mb-2">
+                                        <div className="text-[10px] text-slate-400 font-mono">
+                                            {new Date(item.timestamp).toLocaleTimeString()}
+                                        </div>
+                                        <div className="flex gap-1 opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity">
+                                            {/* Pin Button */}
+                                            <button
+                                                onClick={() => togglePin(item.id)}
+                                                className={`p-1.5 rounded-md transition-colors ${item.isPinned ? 'text-blue-600 bg-blue-50' : 'text-slate-400 hover:text-blue-600 hover:bg-slate-50'}`}
+                                                title={item.isPinned ? "ピン留め解除" : "ピン留め (自動削除されません)"}
+                                            >
+                                                📌
+                                            </button>
+                                            {/* Delete Button */}
+                                            <button
+                                                onClick={() => deleteItem(item.id)}
+                                                className="p-1.5 rounded-md text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+                                                title="削除"
+                                            >
+                                                🗑️
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    {/* Latex Result - reusing display but simplified */}
+                                    <ResultDisplay latex={item.latex} variant="inline" compact={true} />
+
+                                </div>
+                            </div>
+                        ))
+                    )}
+                </div>
+            </div>
         </main>
     );
 }

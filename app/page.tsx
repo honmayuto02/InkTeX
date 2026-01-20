@@ -10,9 +10,11 @@ import { CalibrationModal } from "@/components/CalibrationModal";
 import { SettingsModal } from "@/components/SettingsModal";
 import { useLanguage } from "@/components/contexts/LanguageContext";
 import { clsx } from "clsx";
+import { useRouter } from "next/navigation";
 
 export default function Home() {
   const { t, lang, setLang } = useLanguage();
+  const router = useRouter();
   const [tool, setTool] = useState<"pen" | "eraser">("pen");
   const [penSize, setPenSize] = useState(4);
   const [eraserSize, setEraserSize] = useState(20);
@@ -181,10 +183,10 @@ export default function Home() {
 
         {/* Right: Actions */}
         <div className="flex items-center gap-3">
-          <Tooltip text={t("tip.sync_soon")}>
+          <Tooltip text={t("header.sync")}>
             <button
-              onClick={() => alert(t("msg.sync_unavailable"))}
-              className="p-2 hover:bg-white/10 rounded-full text-white/50 cursor-not-allowed transition-all"
+              onClick={() => router.push("/host")}
+              className="p-2 hover:bg-white/10 rounded-full text-white/90 hover:text-white transition-all"
               title={t("header.sync")}
             >
               <Smartphone size={20} />
