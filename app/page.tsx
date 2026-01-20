@@ -8,6 +8,7 @@ import { ErrorPopup } from "@/components/ErrorPopup";
 import { Settings, Smartphone, PenTool } from "lucide-react";
 import { CalibrationModal } from "@/components/CalibrationModal";
 import { SettingsModal } from "@/components/SettingsModal";
+import { HelpModal } from "@/components/HelpModal";
 import { useLanguage } from "@/components/contexts/LanguageContext";
 import { clsx } from "clsx";
 import { useRouter } from "next/navigation";
@@ -157,12 +158,14 @@ export default function Home() {
     }
   };
 
+  const [showHelp, setShowHelp] = useState(false);
+
   return (
-    <main className="flex flex-col h-screen w-screen bg-[#f9f9f9] overflow-hidden">
+    <main className="flex flex-col min-h-screen w-full bg-[#f9f9f9]">
       <ErrorPopup message={errorMsg} onClose={() => setErrorMsg(null)} />
 
-      {/* Header Bar (Goodnotes Style) */}
-      <header className="flex-none bg-[#28426d] text-white px-4 h-14 flex items-center justify-between z-50 relative shadow-md">
+      {/* Header Bar (Fixed) */}
+      <header className="flex-none bg-[#28426d] text-white px-4 h-14 flex items-center justify-between z-50 sticky top-0 shadow-md">
         {/* Left: Branding & Back (Simulated) */}
         <div className="flex items-center gap-4">
           <div className="p-1.5 bg-white/10 rounded cursor-default">
@@ -172,12 +175,6 @@ export default function Home() {
           <div className="h-6 w-px bg-white/20 mx-2" />
         </div>
 
-        {/* Center: Toolbar is now a floating component, but user wants Goodnotes style.
-            Goodnotes has a PRIMARY toolbar (dark blue) and SECONDARY toolbar (white).
-            Let's put the main actions in the dark blue bar, and the PEN TOOLS in a secondary bar below.
-            Wait, current Toolbar component has everything mixed.
-            Let's keep the Toolbar component as the "Secondary Bar" (White) and put it BELOW the header.
-        */}
         {/* Center: Language Toggle Removed (Moved to Settings) */}
         <div className="flex-1" />
 
@@ -200,10 +197,9 @@ export default function Home() {
             title={t("header.calibration")}
           >
             <PenTool size={20} />
-            {/* Optional label if space permits, but user asked for "icon" mainly. Let's keep it icon based since tooltip exists */}
           </button>
 
-          {/* Settings Button (Now opens SettingsModal) */}
+          {/* Settings Button */}
           <button
             onClick={() => setShowSettings(true)}
             className="p-2 hover:bg-white/10 rounded-full text-white/90 hover:text-white transition-all"
@@ -212,29 +208,12 @@ export default function Home() {
             <Settings size={20} />
           </button>
 
-          <Tooltip text={t("msg.shutdown_confirm")}>
-            <button
-              onClick={async () => {
-                if (confirm(t("msg.shutdown_confirm"))) {
-                  try {
-                    await fetch("/api/shutdown", { method: "POST" });
-                    window.close();
-                  } catch (e) {
-                    alert("Failed to shutdown");
-                  }
-                }
-              }}
-              className="px-3 py-1.5 bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 rounded-lg text-red-100 hover:text-red-50 transition-all flex items-center gap-2 group"
-            >
-              <div className="w-2 h-2 rounded-full bg-red-500 group-hover:bg-red-400 shadow-sm" />
-              <span className="text-xs font-bold text-red-200 group-hover:text-white">{t("header.shutdown")}</span>
-            </button>
-          </Tooltip>
+          {/* Shutdown Button Removed - Auto-shutdown implemented */}
         </div>
       </header>
 
-      {/* Secondary Toolbar (White) */}
-      <div className="flex-none bg-[#f0f4f8] border-b border-slate-300 h-14 flex items-center justify-center relative z-40">
+      {/* Secondary Toolbar (Sticky below header) */}
+      <div className="flex-none bg-[#f0f4f8] border-b border-slate-300 h-14 flex items-center justify-center relative z-40 sticky top-14">
         <Toolbar
           tool={tool}
           setTool={setTool}
@@ -252,15 +231,17 @@ export default function Home() {
             const canvas = canvasRef.current as any;
             if (canvas && canvas.redo) canvas.redo();
           }}
+          onHelp={() => setShowHelp(true)}
         />
       </div>
 
-      {/* Main Content Area (Canvas) */}
+      {/* Main Content Area (Canvas) - Fixed height relative to viewport to ensure drawing feels app-like */}
       <div
-        className="flex-1 relative w-full h-full z-0 bg-[#f9f9f9] cursor-crosshair overflow-hidden"
+        className="relative w-full h-[85vh] z-0 bg-[#f9f9f9] cursor-crosshair overflow-hidden touch-none"
         style={{
           backgroundImage: "radial-gradient(#cbd5e1 1px, transparent 1px)",
-          backgroundSize: "24px 24px" // Grid dots
+          backgroundSize: "24px 24px", // Grid dots
+          touchAction: "none" // Prevents scrolling while drawing on touch devices
         }}
       >
         <Canvas
@@ -283,6 +264,39 @@ export default function Home() {
         )}
       </div>
 
+      {/* FAQ / SEO Section */}
+      <section className="bg-white border-t border-slate-200 py-16 px-4 md:px-8">
+        <div className="max-w-3xl mx-auto space-y-12">
+          <div className="text-center space-y-4">
+            <h2 className="text-3xl font-bold text-slate-800">{t("faq.title")}</h2>
+            <p className="text-slate-500">{t("faq.subtitle")}</p>
+          </div>
+
+          <div className="space-y-8 divide-y divide-slate-100">
+            <FaqItem
+              q={t("faq.q1")}
+              a={t("faq.a1")}
+            />
+            <FaqItem
+              q={t("faq.q2")}
+              a={t("faq.a2")}
+            />
+            <FaqItem
+              q={t("faq.q3")}
+              a={t("faq.a3")}
+            />
+            <FaqItem
+              q={t("faq.q4")}
+              a={t("faq.a4")}
+            />
+          </div>
+
+          <div className="text-center pt-8 text-sm text-slate-400">
+            {t("footer.copyright")}
+          </div>
+        </div>
+      </section>
+
       {/* Calibration Modal */}
       {showCalibration && (
         <CalibrationModal
@@ -297,7 +311,26 @@ export default function Home() {
           onClose={() => setShowSettings(false)}
         />
       )}
+
+      {/* Help Modal */}
+      {showHelp && (
+        <HelpModal onClose={() => setShowHelp(false)} />
+      )}
     </main>
+  );
+}
+
+function FaqItem({ q, a }: { q: string, a: string }) {
+  return (
+    <div className="pt-8 first:pt-0">
+      <h3 className="text-lg font-bold text-slate-800 mb-3 flex items-start gap-2">
+        <span className="text-blue-600">Q.</span> {q}
+      </h3>
+      <p className="text-slate-600 leading-relaxed pl-6">
+        <span className="font-bold text-slate-400 mr-2">A.</span>
+        {a}
+      </p>
+    </div>
   );
 }
 

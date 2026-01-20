@@ -7,7 +7,10 @@ import { Loader2, Maximize2, Minimize2 } from "lucide-react";
 
 import { ErrorPopup } from "@/components/ErrorPopup";
 
+import { useLanguage } from "@/components/contexts/LanguageContext";
+
 export default function HostPage() {
+    const { t } = useLanguage();
     const [sessionId, setSessionId] = useState<string | null>(null);
     const [clientUrl, setClientUrl] = useState<string>("");
 
@@ -26,6 +29,9 @@ export default function HostPage() {
     const [errorMsg, setErrorMsg] = useState<string | null>(null);
     const [processing, setProcessing] = useState(false);
 
+    // FIX: Add state for stable localhost detection
+    const [isLocalhost, setIsLocalhost] = useState(false);
+
     // Initialize Session
     useEffect(() => {
         async function createSession() {
@@ -34,14 +40,18 @@ export default function HostPage() {
                 const data = await res.json();
                 setSessionId(data.sessionId);
 
-                // Detect localhost and warn/suggest
+                // Detect localhost
                 const host = window.location.hostname;
+                const isLocal = host === "localhost" || host === "127.0.0.1";
+                setIsLocalhost(isLocal);
+
+                // Initial URL setup
                 let baseUrl = window.location.origin;
                 setClientUrl(`${baseUrl}/client/${data.sessionId}`);
                 setLoading(false);
             } catch (e) {
                 console.error("Failed to create session", e);
-                setErrorMsg("セッションの作成に失敗しました。");
+                setErrorMsg(t("host.connect_error"));
                 setLoading(false);
             }
         }
@@ -52,6 +62,10 @@ export default function HostPage() {
         if (!sessionId) return;
         const protocol = window.location.protocol;
         const port = window.location.port;
+
+        // If empty input, do nothing or handle gracefully
+        if (!newIp) return;
+
         const newOrigin = `${protocol}//${newIp}${port ? `:${port}` : ""}`;
         setClientUrl(`${newOrigin}/client/${sessionId}`);
     };
@@ -107,14 +121,14 @@ export default function HostPage() {
             if (apiData.latex) {
                 addToHistory(apiData.latex);
             } else if (apiData.error) {
-                setErrorMsg(`変換エラー: ${apiData.error}`);
+                setErrorMsg(`Error: ${apiData.error}`);
             }
         } catch (e: any) {
             console.error("Conversion error", e);
             if (e.message === "Rate limit exceeded") {
-                setErrorMsg("AIサーバーが混雑しています。少し待機します...");
+                setErrorMsg(t("err.rate_limit_msg"));
             } else {
-                setErrorMsg("変換処理中にエラーが発生しました。");
+                setErrorMsg(t("err.unexpected"));
             }
         } finally {
             setProcessing(false);
@@ -180,13 +194,13 @@ export default function HostPage() {
             >
                 <div className="absolute top-4 left-4">
                     <a href="/" className="p-2 text-slate-400 hover:text-slate-600 transition-colors flex items-center gap-1">
-                        <span className="text-sm">← 戻る</span>
+                        <span className="text-sm">{t("host.back")}</span>
                     </a>
                 </div>
 
                 <div className="text-center space-y-2 min-w-[300px]">
-                    <h1 className="text-2xl font-bold text-slate-900">デバイス連携</h1>
-                    <p className="text-slate-500 text-sm">QRコードを読み取って接続</p>
+                    <h1 className="text-2xl font-bold text-slate-900">{t("host.title")}</h1>
+                    <p className="text-slate-500 text-sm">{t("host.scan_qr")}</p>
                 </div>
 
                 <div className="p-4 bg-white rounded-xl shadow border border-slate-100 min-w-[200px]">
@@ -196,11 +210,11 @@ export default function HostPage() {
                 </div>
 
                 <div className="bg-blue-50 text-blue-800 text-xs p-4 rounded-lg w-full max-w-xs text-left">
-                    {/* Only show IP input if we are on localhost OR user requests it */}
-                    {clientUrl && (clientUrl.includes("localhost") || clientUrl.includes("127.0.0.1")) ? (
+                    {/* Replaced logic: Use stable isLocalhost state instead of volatile clientUrl check */}
+                    {isLocalhost ? (
                         <>
-                            <p className="font-bold mb-2">⚠️ 接続きない場合</p>
-                            <p className="mb-2">PCのIPアドレスを入力してください：</p>
+                            <p className="font-bold mb-2">{t("host.manual_ip_title")}</p>
+                            <p className="mb-2">{t("host.manual_ip_prompt")}</p>
                             <input
                                 type="text"
                                 placeholder="例: 192.168.1.5"
@@ -210,11 +224,11 @@ export default function HostPage() {
                         </>
                     ) : (
                         <div className="text-center text-slate-500">
-                            <p className="mb-2">同じWi-Fi/ネットワークに接続してください</p>
+                            <p className="mb-2">{t("host.manual_wifi_msg")}</p>
                             <details>
-                                <summary className="cursor-pointer hover:text-blue-600 underline">手動設定 (開発用)</summary>
+                                <summary className="cursor-pointer hover:text-blue-600 underline">{t("host.manual_settings")}</summary>
                                 <div className="mt-2">
-                                    <p className="mb-1">PCのIPアドレス：</p>
+                                    <p className="mb-1">PC IP:</p>
                                     <input
                                         type="text"
                                         placeholder="例: 192.168.1.5"
@@ -236,16 +250,16 @@ export default function HostPage() {
                         <button
                             onClick={() => setShowQrPanel(!showQrPanel)}
                             className="p-2 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 text-slate-500 hover:text-slate-700 transition-all shadow-sm"
-                            title={showQrPanel ? "QRパネルを隠す" : "QRパネルを表示"}
+                            title={showQrPanel ? t("host.panel_collapse") : t("host.panel_expand")}
                         >
                             {showQrPanel ? <Maximize2 size={18} className="rotate-90" /> : <Maximize2 size={18} className="-rotate-90" />} {/* Using icon to signify expand/collapse */}
                         </button>
-                        <h2 className="text-xl font-bold text-slate-700">受信履歴</h2>
+                        <h2 className="text-xl font-bold text-slate-700">{t("host.history_title")}</h2>
                     </div>
                     {processing && (
                         <div className="flex items-center gap-2 text-blue-600 text-sm bg-blue-50 px-3 py-1 rounded-full animate-pulse">
                             <Loader2 size={14} className="animate-spin" />
-                            <span>変換中...</span>
+                            <span>{t("host.converting")}</span>
                         </div>
                     )}
                 </div>
@@ -261,9 +275,9 @@ export default function HostPage() {
                                 )}
                                 <span className="text-2xl">📡</span>
                             </div>
-                            <p>外部デバイスからの送信を待機しています...</p>
+                            <p>{t("host.waiting")}</p>
                             {!showQrPanel && (
-                                <p className="text-xs text-slate-300">QRコードを表示するには左上のボタンを押してください</p>
+                                <p className="text-xs text-slate-300">{t("host.waiting_hint")}</p>
                             )}
                         </div>
                     ) : (
@@ -279,7 +293,7 @@ export default function HostPage() {
                                             <button
                                                 onClick={() => togglePin(item.id)}
                                                 className={`p-1.5 rounded-md transition-colors ${item.isPinned ? 'text-blue-600 bg-blue-50' : 'text-slate-400 hover:text-blue-600 hover:bg-slate-50'}`}
-                                                title={item.isPinned ? "ピン留め解除" : "ピン留め (自動削除されません)"}
+                                                title={item.isPinned ? t("host.unpin_tooltip") : t("host.pin_tooltip")}
                                             >
                                                 📌
                                             </button>
@@ -287,7 +301,7 @@ export default function HostPage() {
                                             <button
                                                 onClick={() => deleteItem(item.id)}
                                                 className="p-1.5 rounded-md text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors"
-                                                title="削除"
+                                                title={t("host.delete_tooltip")}
                                             >
                                                 🗑️
                                             </button>
