@@ -1,5 +1,5 @@
 // Hybrid store: Vercel KV (Redis) for production, In-memory for dev.
-import { kv } from "@vercel/kv";
+import { createClient } from "@vercel/kv";
 
 // To make it slightly more robust in dev, attach to global
 declare global {
@@ -18,11 +18,17 @@ export interface SessionData {
 }
 
 const memoryStore = global._inkTexStore;
-const IS_KV_ENABLED = !!(process.env.KV_REST_API_URL && process.env.KV_REST_API_TOKEN);
+
+// Support both Vercel KV standard naming and Upstash Integration naming
+const kvUrl = process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL;
+const kvToken = process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN;
+const IS_KV_ENABLED = !!(kvUrl && kvToken);
+
+const kv = IS_KV_ENABLED ? createClient({ url: kvUrl!, token: kvToken! }) : null;
 
 export const store = {
     get: async (key: string): Promise<SessionData | undefined> => {
-        if (IS_KV_ENABLED) {
+        if (kv) {
             try {
                 return await kv.get<SessionData>(key) || undefined;
             } catch (e) {
@@ -33,7 +39,7 @@ export const store = {
         return memoryStore.get(key);
     },
     set: async (key: string, value: SessionData): Promise<void> => {
-        if (IS_KV_ENABLED) {
+        if (kv) {
             try {
                 // Expire after 1 hour (3600s) to keep cleanup automatic
                 await kv.set(key, value, { ex: 3600 });
