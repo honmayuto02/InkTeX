@@ -165,19 +165,68 @@ const Canvas = React.forwardRef<HTMLCanvasElement, CanvasProps>(({
             const canvas = canvasRef.current;
             if (!canvas) return null;
 
-            // Create a temporary canvas to flatten validity (transparency check)
+            // 1. Calculate Bounding Box
+            const strokes = strokesRef.current;
+            // Also include current points if any
+            const currentPoints = currentPointsRef.current;
+
+            // If no content, return
+            if (strokes.length === 0 && currentPoints.length === 0) {
+                // Return empty white square or null?
+                // null leads to "No valid image provided" which allows UI to show error or do nothing
+                // Let's return null to signify "Canvas Empty"
+                return null;
+            }
+
+            let minX = Infinity;
+            let minY = Infinity;
+            let maxX = -Infinity;
+            let maxY = -Infinity;
+            let hasPoints = false;
+
+            const checkPoint = (p: number[]) => {
+                const x = p[0];
+                const y = p[1];
+                const r = (p[2] || 0.5) * 5; // Approximate radius/stroke width impact? 
+                // Using simple point coord is safer, add generic padding later
+                if (x < minX) minX = x;
+                if (y < minY) minY = y;
+                if (x > maxX) maxX = x;
+                if (y > maxY) maxY = y;
+                hasPoints = true;
+            };
+
+            strokes.forEach(s => s.points.forEach(checkPoint));
+            currentPoints.forEach(checkPoint);
+
+            if (!hasPoints) return null;
+
+            // 2. Add Padding
+            const PADDING = 20;
+            minX = Math.max(0, Math.floor(minX - PADDING));
+            minY = Math.max(0, Math.floor(minY - PADDING));
+            maxX = Math.min(canvas.width, Math.ceil(maxX + PADDING));
+            maxY = Math.min(canvas.height, Math.ceil(maxY + PADDING));
+
+            const width = maxX - minX;
+            const height = maxY - minY;
+
+            if (width <= 0 || height <= 0) return null;
+
+            // 3. Create Cropped Canvas
             const tempCanvas = document.createElement('canvas');
-            tempCanvas.width = canvas.width;
-            tempCanvas.height = canvas.height;
+            tempCanvas.width = width;
+            tempCanvas.height = height;
             const tCtx = tempCanvas.getContext('2d');
             if (!tCtx) return null;
 
-            // Fill white
+            // Fill white (for AI legibility)
             tCtx.fillStyle = '#FFFFFF';
-            tCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
+            tCtx.fillRect(0, 0, width, height);
 
-            // Draw original canvas over
-            tCtx.drawImage(canvas, 0, 0);
+            // Draw cropped portion from original canvas
+            // drawImage(image, sx, sy, sWidth, sHeight, dx, dy, dWidth, dHeight)
+            tCtx.drawImage(canvas, minX, minY, width, height, 0, 0, width, height);
 
             return new Promise<Blob | null>((resolve) => tempCanvas.toBlob(resolve, type));
         },
