@@ -18,6 +18,7 @@ export default function HostPage() {
     interface HistoryItem {
         id: string;
         latex: string;
+        imageData: string;
         timestamp: number;
         isPinned: boolean;
     }
@@ -119,7 +120,7 @@ export default function HostPage() {
             const apiData = await apiRes.json();
 
             if (apiData.latex) {
-                addToHistory(apiData.latex);
+                addToHistory(apiData.latex, dataUrl);
             } else if (apiData.error) {
                 setErrorMsg(`Error: ${apiData.error}`);
             }
@@ -135,11 +136,12 @@ export default function HostPage() {
         }
     };
 
-    const addToHistory = (latex: string) => {
+    const addToHistory = (latex: string, imageData: string) => {
         setHistory(prev => {
             const newItem: HistoryItem = {
                 id: Math.random().toString(36).substr(2, 9),
                 latex,
+                imageData,
                 timestamp: Date.now(),
                 isPinned: false
             };
@@ -169,6 +171,27 @@ export default function HostPage() {
 
     const deleteItem = (id: string) => {
         setHistory(prev => prev.filter(item => item.id !== id));
+    };
+
+    // Feedback Logic
+    const handleFeedback = (item: HistoryItem, correctedText: string) => {
+        try {
+            const STORAGE_KEY = "inktext_calibration"; // Fixed key
+            // Ideally we append or merge, but for now we follow the existing pattern
+            const calibrationData = {
+                image: item.imageData,
+                label: correctedText
+            };
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(calibrationData));
+
+            // Local update
+            setHistory(prev => prev.map(i => i.id === item.id ? { ...i, latex: correctedText } : i));
+
+            alert(t("msg.cal_saved") || "Saved");
+        } catch (e) {
+            console.error(e);
+            alert("Failed to save");
+        }
     };
 
     const [showQrPanel, setShowQrPanel] = useState(true);
@@ -264,7 +287,7 @@ export default function HostPage() {
                     )}
                 </div>
 
-                <div className="flex-1 overflow-y-auto space-y-4 pr-2 pb-20">
+                <div className="flex-1 overflow-y-auto pr-2 pb-20">
                     {history.length === 0 ? (
                         <div className="h-full flex flex-col items-center justify-center text-slate-400 space-y-4">
                             <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center relative">
@@ -281,39 +304,35 @@ export default function HostPage() {
                             )}
                         </div>
                     ) : (
-                        history.map((item) => (
-                            <div key={item.id} className={`group bg-white rounded-xl shadow-sm border transition-all ${item.isPinned ? 'border-blue-300 ring-1 ring-blue-100' : 'border-slate-200 hover:border-blue-200'}`}>
-                                <div className="p-3">
-                                    <div className="flex items-start justify-between mb-2">
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
+                            {history.map((item) => (
+                                <div key={item.id} className={`group bg-white rounded-xl shadow-sm border transition-all overflow-hidden ${item.isPinned ? 'border-blue-300 ring-1 ring-blue-100' : 'border-slate-200 hover:border-blue-200'}`}>
+                                    {/* Header: Time & Pin */}
+                                    <div className="px-3 py-2 bg-slate-50 border-b border-slate-100 flex items-center justify-between">
                                         <div className="text-[10px] text-slate-400 font-mono">
                                             {new Date(item.timestamp).toLocaleTimeString()}
                                         </div>
-                                        <div className="flex gap-1 opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity">
-                                            {/* Pin Button */}
-                                            <button
-                                                onClick={() => togglePin(item.id)}
-                                                className={`p-1.5 rounded-md transition-colors ${item.isPinned ? 'text-blue-600 bg-blue-50' : 'text-slate-400 hover:text-blue-600 hover:bg-slate-50'}`}
-                                                title={item.isPinned ? t("host.unpin_tooltip") : t("host.pin_tooltip")}
-                                            >
-                                                📌
-                                            </button>
-                                            {/* Delete Button */}
-                                            <button
-                                                onClick={() => deleteItem(item.id)}
-                                                className="p-1.5 rounded-md text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors"
-                                                title={t("host.delete_tooltip")}
-                                            >
-                                                🗑️
-                                            </button>
-                                        </div>
+                                        <button
+                                            onClick={() => togglePin(item.id)}
+                                            className={`p-1 rounded-md transition-colors ${item.isPinned ? 'text-blue-600 bg-blue-100' : 'text-slate-300 hover:text-blue-600 hover:bg-slate-100'}`}
+                                            title={item.isPinned ? t("host.unpin_tooltip") : t("host.pin_tooltip")}
+                                        >
+                                            📌
+                                        </button>
                                     </div>
 
-                                    {/* Latex Result - reusing display but simplified */}
-                                    <ResultDisplay latex={item.latex} variant="inline" compact={true} />
-
+                                    {/* Latex Result - Full Mode for Feedback */}
+                                    <ResultDisplay
+                                        latex={item.latex}
+                                        variant="inline"
+                                        compact={false}
+                                        onClose={() => deleteItem(item.id)}
+                                        onFeedback={(text) => handleFeedback(item, text)}
+                                        className="border-none shadow-none rounded-none bg-transparent"
+                                    />
                                 </div>
-                            </div>
-                        ))
+                            ))}
+                        </div>
                     )}
                 </div>
             </div>

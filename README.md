@@ -1,36 +1,124 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# InkTeX
+
+![InkTeX Banner](public/globe.svg) *Note: Replace with actual screenshot if available*
+
+InkTeX is an AI-powered handwriting-to-LaTeX converter built with Next.js and Google Gemini API. It features real-time device synchronization, allowing you to use your smartphone or tablet as an input device for your PC.
+
+## Features
+
+- **AI-Powered Conversion**: Converts handwritten math formulas to LaTeX using Google's Gemini models (Default: `gemini-2.0-flash`).
+- **Device Sync Mode**:
+  - **Host (PC)**: Generates a QR code to create a session.
+  - **Client (Mobile/Tablet)**: Scans the QR code to use the device as a drawing pad.
+  - **Real-time Updates**: Strokes drawn on the client appear instantly on the host (visual only) and are sent for processing upon request.
+- **Calibration & Feedback Loop**:
+  - **Calibration**: Practice specific symbols to train the AI on your handwriting style (One-shot learning via prompt context).
+  - **Feedback**: Correct AI errors directly in the UI to improve future accuracy for similar inputs.
+- **Responsive Design**: Built with Tailwind CSS for a seamless experience across devices.
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+- Node.js 18+
+- Google Gemini API Key
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### Installation
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/yourusername/inktex.git
+   cd inktex
+   ```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
 
-## Learn More
+3. Set up environment variables:
+   Copy `.env.local.example` to `.env.local` and add your API key.
+   ```bash
+   cp .env.local.example .env.local
+   ```
+   Edit `.env.local`:
+   ```env
+   GEMINI_API_KEY=your_api_key_here
+   ```
 
-To learn more about Next.js, take a look at the following resources:
+4. Run the development server:
+   ```bash
+   npm run dev
+   ```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+5. Open [http://localhost:3000](http://localhost:3000) with your browser.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Technologies
 
-## Deploy on Vercel
+- **Framework**: Next.js 15 (App Router)
+- **AI**: Google Gemini API (`gemini-2.0-flash`, `gemini-1.5-flash`)
+- **Styling**: Tailwind CSS
+- **Math Rendering**: KaTeX
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+---
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+# InkTeX (日本語)
+
+InkTeXは、Next.jsとGoogle Gemini APIを使用した、AI搭載の手書き数式 to LaTeX変換ツールです。
+デバイス連携機能を備えており、スマホやタブレットをPCのペンタブレット代わりに使用することができます。
+
+## 主な機能
+
+- **AIによる高精度変換**: 手書きの数式をGoogle Geminiモデル（デフォルト: `gemini-2.0-flash`）を使用してLaTeX形式に変換します。
+- **デバイス連携モード (Device Sync)**:
+  - **ホスト (PC)**: QRコードを表示してセッションを作成します。
+  - **クライアント (スマホ/タブレット)**: QRコードを読み取ることで、手元の端末を入力デバイスとして使用できます。
+  - **リアルタイム連携**: クライアントで描いた線がホスト側に送信され、変換を実行できます。
+- **キャリブレーション & フィードバックループ**:
+  - **キャリブレーション**: 自分の筆跡（特定の記号や数式）を登録することで、AIの認識精度を向上させます（プロンプトコンテキストによるワンショット学習）。
+  - **フィードバック機能**: 変換結果が間違っていた場合、その場で正しいLaTeXを入力して修正・保存することで、次回の認識精度を改善します。
+- **レスポンシブデザイン**: Tailwind CSSによるモダンで使いやすいUI。
+
+## 始め方
+
+### 必須環境
+
+- Node.js 18以上
+- Google Gemini APIキー
+
+### インストール手順
+
+1. リポジトリをクローンします:
+   ```bash
+   git clone https://github.com/yourusername/inktex.git
+   cd inktex
+   ```
+
+2. 依存パッケージをインストールします:
+   ```bash
+   npm install
+   ```
+
+3. 環境変数を設定します:
+   `.env.local.example` をコピーして `.env.local` を作成し、APIキーを設定します。
+   ```bash
+   cp .env.local.example .env.local
+   ```
+   `.env.local` を編集:
+   ```env
+   GEMINI_API_KEY=あなたのAPIキー
+   ```
+
+4. 開発サーバーを起動します:
+   ```bash
+   npm run dev
+   ```
+
+5. ブラウザで [http://localhost:3000](http://localhost:3000) を開きます。
+
+## 使用技術
+
+- **フレームワーク**: Next.js 15 (App Router)
+- **AI**: Google Gemini API (`gemini-2.0-flash`, `gemini-1.5-flash`)
+- **スタイリング**: Tailwind CSS
+- **数式レンダリング**: KaTeX

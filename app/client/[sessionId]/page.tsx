@@ -14,7 +14,16 @@ export default function ClientPage({ params }: { params: Promise<{ sessionId: st
     const { t } = useLanguage();
 
     const [tool, setTool] = useState<"pen" | "eraser">("pen");
-    const [size, setSize] = useState(4);
+    const [penSize, setPenSize] = useState(4);
+    const [eraserSize, setEraserSize] = useState(20);
+
+    // Dynamic size accessor
+    const size = tool === "pen" ? penSize : eraserSize;
+    const setSize = (newSize: number) => {
+        if (tool === "pen") setPenSize(newSize);
+        else setEraserSize(newSize);
+    };
+
     const [isSending, setIsSending] = useState(false);
     const [sentSuccess, setSentSuccess] = useState(false);
     const [errorMsg, setErrorMsg] = useState<string | null>(null);
