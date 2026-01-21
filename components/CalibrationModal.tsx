@@ -24,7 +24,12 @@ const CALIBRATION_SECTIONS = [
             "\\lim_{x \\to 0} \\frac{\\sin x}{x} = 1", // Limit
             "\\sum_{n=1}^{\\infty} \\frac{1}{n^2} = \\frac{\\pi^2}{6}", // Basel Problem
             "A = \\begin{pmatrix} a & b \\\\ c & d \\end{pmatrix}", // Matrix
-            "\\frac{d}{dx} \\left( \\frac{u}{v} \\right) = \\frac{u'v - uv'}{v^2}" // Quotient Rule
+            "\\frac{d}{dx} \\left( \\frac{u}{v} \\right) = \\frac{u'v - uv'}{v^2}", // Quotient Rule
+            "\\iint_D (x^2 + y^2) dx dy", // Double Integral
+            "\\det(A - \\lambda I) = 0", // Eigenvalue equation
+            "\\nabla \\times \\mathbf{E} = -\\frac{\\partial \\mathbf{B}}{\\partial t}", // Maxwell (Faraday)
+            "i\\hbar \\frac{\\partial}{\\partial t} \\Psi = \\hat{H} \\Psi", // Schrödinger
+            "\\sum_{i=1}^{n} i^3 = \\left( \\frac{n(n+1)}{2} \\right)^2" // Summation identity
         ]
     },
     {
@@ -182,7 +187,7 @@ export function CalibrationModal({ onClose, onSave }: CalibrationModalProps) {
                     </div>
 
                     {/* Centered Toolbar */}
-                    <div className="absolute inset-x-0 top-0 bottom-0 flex items-center justify-center pointer-events-none">
+                    <div className="absolute inset-x-0 top-0 bottom-0 flex items-center justify-center pointer-events-none z-50">
                         <div className="pointer-events-auto scale-90 origin-center h-full">
                             <Toolbar
                                 tool={tool}

@@ -306,7 +306,7 @@ export default function HostPage() {
                     ) : (
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
                             {history.map((item) => (
-                                <div key={item.id} className={`group bg-white rounded-xl shadow-sm border transition-all overflow-hidden ${item.isPinned ? 'border-blue-300 ring-1 ring-blue-100' : 'border-slate-200 hover:border-blue-200'}`}>
+                                <div key={item.id} className={`group bg-white rounded-xl shadow-sm border transition-all overflow-hidden h-96 flex flex-col ${item.isPinned ? 'border-blue-300 ring-1 ring-blue-100' : 'border-slate-200 hover:border-blue-200'}`}>
                                     {/* Header: Time & Pin */}
                                     <div className="px-3 py-2 bg-slate-50 border-b border-slate-100 flex items-center justify-between">
                                         <div className="text-[10px] text-slate-400 font-mono">
@@ -328,7 +328,7 @@ export default function HostPage() {
                                         compact={false}
                                         onClose={() => deleteItem(item.id)}
                                         onFeedback={(text) => handleFeedback(item, text)}
-                                        className="border-none shadow-none rounded-none bg-transparent"
+                                        className="border-none shadow-none rounded-none bg-transparent flex-1 min-h-0"
                                     />
                                 </div>
                             ))}

@@ -249,6 +249,16 @@ const Canvas = React.forwardRef<HTMLCanvasElement, CanvasProps>(({
     }, [strokes, renderLoop]);
 
 
+    const handlePointerLeave = (e: React.PointerEvent) => {
+        // If drawing, finish the stroke first
+        if (isDrawing) {
+            handlePointerUp(e);
+        }
+        // Explicitly clear cursor position to hide it
+        cursorPosRef.current = null;
+        requestAnimationFrame(renderLoop);
+    };
+
     return (
         <canvas
             ref={canvasRef}
@@ -256,7 +266,7 @@ const Canvas = React.forwardRef<HTMLCanvasElement, CanvasProps>(({
             onPointerDown={handlePointerDown}
             onPointerMove={handlePointerMove}
             onPointerUp={handlePointerUp}
-            onPointerLeave={handlePointerUp}
+            onPointerLeave={handlePointerLeave}
         />
     );
 });

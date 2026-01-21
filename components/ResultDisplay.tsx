@@ -80,7 +80,7 @@ export function ResultDisplay({ latex, onClose, onFeedback, variant = "floating"
             )}
 
             {/* Scrollable Content */}
-            <div className={clsx("overflow-y-auto", compact ? "p-3 space-y-2" : "max-h-[60vh] md:max-h-[400px] p-4 space-y-4")}>
+            <div className={clsx("overflow-y-auto", compact ? "p-3 space-y-2" : (variant === "inline" ? "h-full p-4 space-y-4" : "max-h-[60vh] md:max-h-[400px] p-4 space-y-4"))}>
 
                 {!isEditing ? (
                     <>
