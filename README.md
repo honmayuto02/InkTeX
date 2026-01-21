@@ -1,6 +1,6 @@
 # InkTeX
 
-![InkTeX Banner](public/globe.svg) *Note: Replace with actual screenshot if available*
+![InkTeX Demo](public/demo.png)
 
 InkTeX is an AI-powered handwriting-to-LaTeX converter built with Next.js and Google Gemini API. It features real-time device synchronization, allowing you to use your smartphone or tablet as an input device for your PC.
 
