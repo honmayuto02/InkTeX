@@ -33,31 +33,86 @@ export default function HostPage() {
     // FIX: Add state for stable localhost detection
     const [isLocalhost, setIsLocalhost] = useState(false);
 
-    // Initialize Session
-    useEffect(() => {
-        async function createSession() {
-            try {
+    // Resume State
+    const [lastSessionId, setLastSessionId] = useState<string | null>(null);
+    const [manualId, setManualId] = useState("");
+    const [isManualEntry, setIsManualEntry] = useState(false);
+
+    // Initialize Session logic extracted to function
+    const startSession = async (customId?: string) => {
+        try {
+            // If custom ID, skip creation API call if API doesn't support custom ID creation?
+            // Existing API `/api/sync?action=create` generates ID. 
+            // If we want to resume, we probably just use the ID. 
+            // But we need to check if session is valid? Or just start polling?
+            // Let's assume validation happens on poll or initial fetch.
+
+            let id = customId;
+            if (!id) {
                 const res = await fetch("/api/sync?action=create");
                 const data = await res.json();
-                setSessionId(data.sessionId);
-
-                // Detect localhost
-                const host = window.location.hostname;
-                const isLocal = host === "localhost" || host === "127.0.0.1";
-                setIsLocalhost(isLocal);
-
-                // Initial URL setup
-                let baseUrl = window.location.origin;
-                setClientUrl(`${baseUrl}/client/${data.sessionId}`);
-                setLoading(false);
-            } catch (e) {
-                console.error("Failed to create session", e);
-                setErrorMsg(t("host.connect_error"));
-                setLoading(false);
+                id = data.sessionId;
             }
+
+            if (!id) throw new Error("No ID");
+
+            setSessionId(id);
+            // Save to local storage provided it's new? Or always?
+            if (typeof window !== 'undefined') {
+                localStorage.setItem('inktex_last_session', id);
+            }
+
+            // Detect localhost
+            const host = window.location.hostname;
+            const isLocal = host === "localhost" || host === "127.0.0.1";
+            setIsLocalhost(isLocal);
+
+            // Initial URL setup
+            let baseUrl = window.location.origin;
+            setClientUrl(`${baseUrl}/client/${id}`);
+            setLoading(false);
+        } catch (e) {
+            console.error("Failed to create session", e);
+            setErrorMsg(t("host.connect_error"));
+            setLoading(false);
         }
-        createSession();
+    };
+
+    // Initialize
+    useEffect(() => {
+        const saved = typeof window !== 'undefined' ? localStorage.getItem('inktex_last_session') : null;
+        if (saved) {
+            setLastSessionId(saved);
+        }
+
+        // If no saved session, start new immediately? 
+        // Or wait for user choice if saved session exists?
+        // Let's auto-start ONLY if no saved session found, to avoid flashing new ID then asking to resume.
+        if (!saved) {
+            startSession();
+        } else {
+            setLoading(false); // Stop loading to show resume UI
+        }
     }, []);
+
+    const handleResume = () => {
+        if (lastSessionId) {
+            startSession(lastSessionId);
+            setLastSessionId(null);
+        }
+    };
+
+    const handleManual = () => {
+        if (manualId.length > 0) {
+            startSession(manualId);
+            setIsManualEntry(false);
+        }
+    };
+
+    // Reset session
+    const handleResetSession = () => {
+        startSession(); // Will generate new
+    };
 
     const updateHostIp = (newIp: string) => {
         if (!sessionId) return;
@@ -226,42 +281,119 @@ export default function HostPage() {
                     <p className="text-slate-500 text-sm">{t("host.scan_qr")}</p>
                 </div>
 
-                <div className="p-4 bg-white rounded-xl shadow border border-slate-100 min-w-[200px]">
-                    {clientUrl && (
-                        <QRCodeSVG value={clientUrl} size={180} level="H" />
+                <div className="p-6 bg-white rounded-2xl shadow-sm border border-slate-200 w-full max-w-[320px]">
+                    {/* Resume / Manual Options */}
+                    {!sessionId && lastSessionId && (
+                        <div className="mb-6 space-y-3">
+                            <div className="text-sm font-bold text-slate-500 uppercase tracking-wider">{t("host.resume_title")}</div>
+
+                            <button
+                                onClick={handleResume}
+                                className="w-full py-4 px-5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl shadow-md hover:shadow-blue-200 hover:scale-[1.02] active:scale-[0.98] transition-all flex flex-row items-center justify-between group"
+                            >
+                                <span className="text-lg font-bold">{t("host.resume_btn").replace("ID:", "")}</span>
+                                <span className="font-mono text-sm opacity-80 tracking-widest bg-white/20 px-2 py-0.5 rounded">ID: {lastSessionId}</span>
+                            </button>
+
+                            <div className="relative py-2">
+                                <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-slate-100"></div></div>
+                                <div className="relative flex justify-center text-xs uppercase"><span className="bg-white px-2 text-slate-400">or</span></div>
+                            </div>
+
+                            <button onClick={() => startSession()} className="w-full py-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-600 font-bold hover:bg-slate-100 hover:text-slate-800 transition-colors">
+                                {t("host.new_session")}
+                            </button>
+                        </div>
+                    )}
+
+                    {sessionId && (
+                        <div className="flex flex-col items-center">
+                            {clientUrl ? (
+                                <div className="bg-white p-2 rounded-xl shadow-inner border border-slate-100 mb-4">
+                                    <QRCodeSVG value={clientUrl} size={200} level="H" className="rounded-lg" />
+                                </div>
+                            ) : (
+                                <div className="w-52 h-52 bg-slate-100 animate-pulse rounded-xl mb-4" />
+                            )}
+
+                            <div className="flex flex-col items-center gap-2 text-center">
+                                <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Session ID</span>
+                                <div className="font-mono text-3xl font-black text-slate-800 tracking-widest select-all cursor-pointer hover:text-blue-600 transition-colors">{sessionId}</div>
+
+                                <button onClick={handleResetSession} className="mt-4 text-xs font-bold text-slate-400 hover:text-red-500 transition-colors border-b border-transparent hover:border-red-500 pb-0.5">
+                                    {t("host.new_session")}
+                                </button>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Manual Entry Toggle (Show if NO session active) */}
+                    {!sessionId && !lastSessionId && (
+                        <div className="w-full">
+                            {/* Initial State: Only show "Connect manually" if needed? Or just show the input cleanly? 
+                                User complained about clutter. Let's make it a clean card too. 
+                             */}
+                            <div className="flex flex-col items-center gap-4 py-8">
+                                <button onClick={() => startSession()} className="w-full py-4 bg-blue-600 text-white rounded-xl font-bold shadow-lg hover:bg-blue-700 transition-all flex items-center justify-center gap-2">
+                                    <span>{t("host.new_session")}</span>
+                                </button>
+
+                                <div className="w-full flex items-center gap-2">
+                                    <input
+                                        type="text"
+                                        className="flex-1 bg-slate-50 border-none rounded-lg px-4 py-2 text-sm font-mono placeholder:text-slate-400 focus:ring-2 focus:ring-blue-100 transition-all"
+                                        placeholder="Session ID..."
+                                        value={manualId}
+                                        onChange={(e) => setManualId(e.target.value)}
+                                    />
+                                    <button
+                                        onClick={handleManual}
+                                        disabled={!manualId}
+                                        className="bg-slate-200 text-slate-600 px-4 py-2 rounded-lg text-sm font-bold hover:bg-slate-300 disabled:opacity-50 disabled:hover:bg-slate-200 transition-colors"
+                                    >
+                                        GO
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
                     )}
                 </div>
 
-                <div className="bg-blue-50 text-blue-800 text-xs p-4 rounded-lg w-full max-w-xs text-left">
-                    {/* Replaced logic: Use stable isLocalhost state instead of volatile clientUrl check */}
-                    {isLocalhost ? (
-                        <>
-                            <p className="font-bold mb-2">{t("host.manual_ip_title")}</p>
-                            <p className="mb-2">{t("host.manual_ip_prompt")}</p>
-                            <input
-                                type="text"
-                                placeholder="例: 192.168.1.5"
-                                className="w-full px-3 py-2 border border-blue-200 rounded bg-white focus:outline-none focus:ring-1 focus:ring-blue-500 font-mono"
-                                onChange={(e) => updateHostIp(e.target.value)}
-                            />
-                        </>
-                    ) : (
-                        <div className="text-center text-slate-500">
-                            <p className="mb-2">{t("host.manual_wifi_msg")}</p>
-                            <details>
-                                <summary className="cursor-pointer hover:text-blue-600 underline">{t("host.manual_settings")}</summary>
-                                <div className="mt-2">
-                                    <p className="mb-1">PC IP:</p>
+                {/* Network Settings Toggles (Collapsed) */}
+                <div className="mt-8 text-xs text-center w-full max-w-[320px]">
+                    <details className="group">
+                        <summary className="cursor-pointer text-slate-400 hover:text-slate-600 transition-colors list-none font-medium flex items-center justify-center gap-1">
+                            <span>{t("host.manual_ip_title")}</span>
+                            <span className="group-open:rotate-180 transition-transform">▼</span>
+                        </summary>
+                        <div className="mt-4 bg-slate-50 p-4 rounded-xl text-left animate-in slide-in-from-top-2 fade-in">
+                            {/* Replaced logic: Use stable isLocalhost state */}
+                            {isLocalhost ? (
+                                <>
+                                    <p className="mb-2 text-slate-500">{t("host.manual_ip_prompt")}</p>
                                     <input
                                         type="text"
                                         placeholder="例: 192.168.1.5"
-                                        className="w-full px-3 py-2 border border-blue-200 rounded bg-white focus:outline-none focus:ring-1 focus:ring-blue-500 font-mono"
+                                        className="w-full px-3 py-2 border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-100 font-mono text-slate-700"
                                         onChange={(e) => updateHostIp(e.target.value)}
                                     />
+                                </>
+                            ) : (
+                                <div>
+                                    <p className="mb-3 text-slate-500">{t("host.manual_wifi_msg")}</p>
+                                    <div className="pt-2 border-t border-slate-200">
+                                        <p className="mb-1 text-slate-400">Manual Host IP Override:</p>
+                                        <input
+                                            type="text"
+                                            placeholder="192.168.x.x"
+                                            className="w-full px-3 py-2 border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-100 font-mono text-slate-700"
+                                            onChange={(e) => updateHostIp(e.target.value)}
+                                        />
+                                    </div>
                                 </div>
-                            </details>
+                            )}
                         </div>
-                    )}
+                    </details>
                 </div>
             </div>
 
@@ -306,7 +438,7 @@ export default function HostPage() {
                     ) : (
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
                             {history.map((item) => (
-                                <div key={item.id} className={`group bg-white rounded-xl shadow-sm border transition-all overflow-hidden h-96 flex flex-col ${item.isPinned ? 'border-blue-300 ring-1 ring-blue-100' : 'border-slate-200 hover:border-blue-200'}`}>
+                                <div key={item.id} className={`group bg-white rounded-xl shadow-sm border transition-all overflow-hidden h-[22rem] flex flex-col ${item.isPinned ? 'border-blue-300 ring-1 ring-blue-100' : 'border-slate-200 hover:border-blue-200'}`}>
                                     {/* Header: Time & Pin */}
                                     <div className="px-3 py-2 bg-slate-50 border-b border-slate-100 flex items-center justify-between">
                                         <div className="text-[10px] text-slate-400 font-mono">

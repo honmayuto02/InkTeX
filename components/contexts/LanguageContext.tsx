@@ -32,6 +32,9 @@ const translations: Dictionary = {
     "settings.title": { ja: "設定", en: "Settings" },
     "settings.language": { ja: "表示言語", en: "Language" },
     "settings.close": { ja: "閉じる", en: "Close" },
+    "settings.palm": { ja: "パームリジェクション", en: "Palm Rejection" },
+    "settings.palm_on": { ja: "オン (ペンのみ)", en: "On (Pen Only)" },
+    "settings.palm_off": { ja: "オフ (タッチも反応)", en: "Off (Touch & Pen)" },
 
     // Result
     "result.title": { ja: "変換結果", en: "Result" },
@@ -123,6 +126,12 @@ const translations: Dictionary = {
     "host.delete_tooltip": { ja: "削除", en: "Delete" },
     "host.panel_expand": { ja: "QRパネルを表示", en: "Show QR Panel" },
     "host.panel_collapse": { ja: "QRパネルを隠す", en: "Hide QR Panel" },
+
+    // Host Resume / Manual
+    "host.resume_title": { ja: "前回のセッション", en: "Previous Session" },
+    "host.resume_btn": { ja: "再開 ID:", en: "Resume ID:" },
+    "host.manual_id": { ja: "IDを手入力", en: "Enter ID manually" },
+    "host.new_session": { ja: "新しいセッションを開始", en: "Start New Session" },
 
     // Client Page
     "client.confirm_clear": { ja: "キャンバスを消去しますか？", en: "Clear canvas?" },

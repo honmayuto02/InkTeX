@@ -15,7 +15,7 @@ export function HelpModal({ onClose }: HelpModalProps) {
                 {/* Header */}
                 <div className="bg-[#28426d] p-4 flex justify-between items-center text-white">
                     <h2 className="text-lg font-bold flex items-center gap-2">
-                        <span className="bg-white/20 p-1 rounded-md text-sm">?</span>
+                        <span className="bg-white/20 w-6 h-6 flex items-center justify-center rounded-full text-sm font-bold">?</span>
                         {t("help.title")}
                     </h2>
                     <button onClick={onClose} className="p-1 hover:bg-white/20 rounded-full transition-colors">

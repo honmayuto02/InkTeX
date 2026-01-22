@@ -3,7 +3,8 @@
 import React, { useState, useRef, use } from "react";
 import Canvas from "@/components/Canvas";
 import { Toolbar } from "@/components/Toolbar";
-import { Send, Check } from "lucide-react";
+import { Send, Check, Settings } from "lucide-react";
+import { ClientSettingsModal } from "@/components/ClientSettingsModal";
 
 import { ErrorPopup } from "@/components/ErrorPopup";
 
@@ -15,7 +16,7 @@ export default function ClientPage({ params }: { params: Promise<{ sessionId: st
 
     const [tool, setTool] = useState<"pen" | "eraser">("pen");
     const [penSize, setPenSize] = useState(4);
-    const [eraserSize, setEraserSize] = useState(20);
+    const [eraserSize, setEraserSize] = useState(40);
 
     // Dynamic size accessor
     const size = tool === "pen" ? penSize : eraserSize;
@@ -27,6 +28,11 @@ export default function ClientPage({ params }: { params: Promise<{ sessionId: st
     const [isSending, setIsSending] = useState(false);
     const [sentSuccess, setSentSuccess] = useState(false);
     const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+    // Palm Rejection Default Off
+    const [palmRejection, setPalmRejection] = useState(false);
+    // Settings Modal
+    const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const [canvasKey, setCanvasKey] = useState(0);
@@ -94,12 +100,18 @@ export default function ClientPage({ params }: { params: Promise<{ sessionId: st
     };
 
     return (
-        // Allow scrolling (remove overflow-hidden) and force taller height to trigger browser UI hiding
-        // User requested 1.3x height (130dvh)
-        <main className="relative w-full min-h-[130dvh] bg-[#f9f9f9] overscroll-none">
+        // Revert to fixed screen height (no scroll margin)
+        <main className="relative w-full h-[100dvh] bg-[#f9f9f9] overscroll-none overflow-hidden touch-none">
             <ErrorPopup message={errorMsg} onClose={() => setErrorMsg(null)} />
 
-            {/* Canvas Layer - Force black color */}
+            <ClientSettingsModal
+                isOpen={isSettingsOpen}
+                onClose={() => setIsSettingsOpen(false)}
+                palmRejection={palmRejection}
+                onTogglePalmRejection={() => setPalmRejection(!palmRejection)}
+            />
+
+            {/* Canvas Layer - Full Screen */}
             <div className="absolute inset-0 z-0">
                 <Canvas
                     key={canvasKey}
@@ -107,27 +119,30 @@ export default function ClientPage({ params }: { params: Promise<{ sessionId: st
                     tool={tool}
                     color="#000000"
                     size={size}
+                    palmRejection={palmRejection}
                 />
             </div>
 
             {/* UI Layer */}
             <>
-                {/* ID Display - Position based on layout */}
-                <div className={`fixed z-50 pointer-events-auto bg-white/80 backdrop-blur px-3 py-1 rounded-full text-xs font-mono text-slate-500 border border-slate-200 shadow-sm
-                    ${isLandscape ? 'bottom-4 right-4' : 'bottom-4 left-4'}
-                `}>
-                    ID: {sessionId}
+                {/* ID Display - Bottom Right to avoid Left Toolbar */}
+                <div className="fixed z-50 pointer-events-auto flex flex-col items-end gap-2 bottom-4 right-4">
+                    <div className="bg-white/80 backdrop-blur px-3 py-1 rounded-full text-xs font-mono text-slate-500 border border-slate-200 shadow-sm">
+                        ID: {sessionId}
+                    </div>
+
+                    {/* Desktop/Tablet Settings Button could go here if needed, but it's in toolbar now */}
+                    {/* Palm indicator */}
+                    {palmRejection && (
+                        <div className="w-8 h-8 rounded-full bg-blue-100 border border-blue-200 flex items-center justify-center text-blue-600" title="Palm Rejection ON">
+                            <span className="text-xs">🖐️</span>
+                        </div>
+                    )}
                 </div>
 
-                {/* Toolbar */}
-                <div className={`
-                    fixed z-50 pointer-events-auto bg-white border-slate-200 shadow-sm transition-all duration-300
-                    ${isLandscape
-                        ? 'top-0 left-0 bottom-0 w-[4.5rem] border-r flex flex-col items-center py-2' // Landscape: Left Sidebar, slightly wider if needed but w-[4.5rem] is tight
-                        : 'top-0 left-0 right-0 w-full h-16 border-b pt-[env(safe-area-inset-top)]' // Portrait: Top Bar
-                    }
-                `}>
-                    <div className={isLandscape ? "h-full w-full" : "max-w-3xl mx-auto h-full"}>
+                {/* Toolbar - Always Left Sidebar */}
+                <div className="fixed top-0 left-0 bottom-0 w-[4.5rem] border-r z-50 pointer-events-auto bg-white border-slate-200 shadow-sm transition-all duration-300 py-2 flex flex-col items-center">
+                    <div className="h-full w-full">
                         <Toolbar
                             tool={tool}
                             setTool={setTool}
@@ -136,14 +151,18 @@ export default function ClientPage({ params }: { params: Promise<{ sessionId: st
                             onClear={handleClear}
                             onConvert={handleSend}
                             isConverting={isSending}
-                            orientation={isLandscape ? "vertical" : "horizontal"}
-                            className={isLandscape ? "justify-center" : "justify-center"}
+                            orientation="vertical"
+                            className="justify-start h-full"
+                            showTooltip={false}
                             onUndo={() => {
                                 const canvas = canvasRef.current as any;
-                                if (canvas && canvas.undo) {
-                                    canvas.undo();
-                                }
+                                if (canvas && canvas.undo) canvas.undo();
                             }}
+                            onRedo={() => {
+                                const canvas = canvasRef.current as any;
+                                if (canvas && canvas.redo) canvas.redo();
+                            }}
+                            onSettings={() => setIsSettingsOpen(true)}
                         />
                     </div>
                 </div>

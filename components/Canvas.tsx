@@ -15,6 +15,7 @@ interface CanvasProps {
     color?: string; // default black
     size: number;
     onExport?: (blob: Blob | null) => void;
+    palmRejection?: boolean;
 }
 
 const Canvas = React.forwardRef<HTMLCanvasElement, CanvasProps>(({
@@ -22,22 +23,27 @@ const Canvas = React.forwardRef<HTMLCanvasElement, CanvasProps>(({
     color = "#000000",
     size,
     onExport,
+    palmRejection = false,
 }, ref) => {
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const [strokes, setStrokes] = useState<Stroke[]>([]);
-    const [redoStack, setRedoStack] = useState<Stroke[]>([]); // Redo stack
-    const [currentPoints, setCurrentPoints] = useState<number[][]>([]); // This state will be kept for consistency but drawing will use ref
+    const [redoStack, setRedoStack] = useState<Stroke[]>([]);
+    const [currentPoints, setCurrentPoints] = useState<number[][]>([]);
     const [isDrawing, setIsDrawing] = useState(false);
-    // const [cursorPos, setCursorPos] = useState<number[] | null>(null); // Replaced by ref
 
-    // Use refs for mutable state accessed in render (animation frame)
-    // This allows the render function to be stable and NOT recreate on every frame
+    // Refs for mutable state in Loop
     const strokesRef = useRef<Stroke[]>([]);
     const currentPointsRef = useRef<number[][]>([]);
 
-    // We still need state for React updates (like undo/redo stack visibility, though canvas is imperative)
-    // Actually, let's keep state for strokes to force re-renders if needed, BUT use ref for the loop.
-    // Or better: Update ref in sync with state.
+    // Zoom & Pan State
+    const [transform, setTransform] = useState({ x: 0, y: 0, k: 1 });
+    const transformRef = useRef({ x: 0, y: 0, k: 1 });
+
+    // Active Pointers for Multitouch
+    const pointersRef = useRef<Map<number, { x: number, y: number }>>(new Map());
+
+    // Check if we are panning (2 fingers)
+    const isPanning = useRef(false);
 
     // Sync refs
     useEffect(() => {
@@ -48,13 +54,30 @@ const Canvas = React.forwardRef<HTMLCanvasElement, CanvasProps>(({
         currentPointsRef.current = currentPoints;
     }, [currentPoints]);
 
-    // Cursor Drawing (Separate from main loop? Or integrated?)
-    // If we want smooth cursor, we should track mouse pos in a Ref and draw in the same loop.
-    const cursorPosRef = useRef<number[] | null>(null);
+    useEffect(() => {
+        transformRef.current = transform;
+        requestAnimationFrame(renderLoop);
+    }, [transform]);
 
-    // To handle high-hz cursor updates, we can use a single AnimationLoop instead of on-demand rAF
-    // But on-demand is cleaner for React.
-    // Let's modify the render loop to look at refs.
+    // Helpers
+    const toWorld = (x: number, y: number) => {
+        const t = transformRef.current;
+        return {
+            x: (x - t.x) / t.k,
+            y: (y - t.y) / t.k
+        };
+    };
+
+    const getDistance = (p1: { x: number, y: number }, p2: { x: number, y: number }) => {
+        return Math.sqrt(Math.pow(p2.x - p1.x, 2) + Math.pow(p2.y - p1.y, 2));
+    };
+
+    const getCenter = (p1: { x: number, y: number }, p2: { x: number, y: number }) => {
+        return { x: (p1.x + p2.x) / 2, y: (p1.y + p2.y) / 2 };
+    };
+
+    // Cursor Drawing
+    const cursorPosRef = useRef<number[] | null>(null);
 
     const renderLoop = useCallback(() => {
         const canvas = canvasRef.current;
@@ -62,7 +85,13 @@ const Canvas = React.forwardRef<HTMLCanvasElement, CanvasProps>(({
         const ctx = canvas.getContext("2d");
         if (!ctx) return;
 
+        // Reset Transform to clear absolute
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
         ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        // Apply Zoom/Pan
+        const t = transformRef.current;
+        ctx.setTransform(t.k, 0, 0, t.k, t.x, t.y);
 
         // Strokes
         strokesRef.current.forEach((s) => {
@@ -73,6 +102,9 @@ const Canvas = React.forwardRef<HTMLCanvasElement, CanvasProps>(({
         if (currentPointsRef.current.length > 0) {
             drawStroke(ctx, currentPointsRef.current, color, size, tool === "eraser");
         }
+
+        // Reset for Cursor
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
 
         // Cursor
         const cPos = cursorPosRef.current;
@@ -85,7 +117,12 @@ const Canvas = React.forwardRef<HTMLCanvasElement, CanvasProps>(({
             ctx.globalCompositeOperation = "source-over";
 
             ctx.beginPath();
-            ctx.arc(cPos[0], cPos[1], size / 2, 0, Math.PI * 2);
+
+            // Visual size scales with zoom? No, brush size is in world units. 
+            // So if I zoom 2x, a 10px brush should look 20px on screen.
+            const visualSize = size * t.k;
+
+            ctx.arc(cPos[0], cPos[1], visualSize / 2, 0, Math.PI * 2);
             ctx.strokeStyle = tool === "eraser" ? "#000000" : color; // Black stroke for visibility
             ctx.lineWidth = 1.5; // Thicker line
             if (tool === "eraser") {
@@ -95,7 +132,7 @@ const Canvas = React.forwardRef<HTMLCanvasElement, CanvasProps>(({
                 // Inner stroke for contrast?
                 ctx.stroke();
                 ctx.beginPath();
-                ctx.arc(cPos[0], cPos[1], size / 2 - 1, 0, Math.PI * 2);
+                ctx.arc(cPos[0], cPos[1], visualSize / 2 - 1, 0, Math.PI * 2);
                 ctx.strokeStyle = "rgba(255,255,255,0.5)";
                 ctx.lineWidth = 1;
                 ctx.stroke();
@@ -203,10 +240,11 @@ const Canvas = React.forwardRef<HTMLCanvasElement, CanvasProps>(({
 
             // 2. Add Padding
             const PADDING = 20;
-            minX = Math.max(0, Math.floor(minX - PADDING));
-            minY = Math.max(0, Math.floor(minY - PADDING));
-            maxX = Math.min(canvas.width, Math.ceil(maxX + PADDING));
-            maxY = Math.min(canvas.height, Math.ceil(maxY + PADDING));
+            // Remove viewport clamping to allow full world-space export
+            minX = Math.floor(minX - PADDING);
+            minY = Math.floor(minY - PADDING);
+            maxX = Math.ceil(maxX + PADDING);
+            maxY = Math.ceil(maxY + PADDING);
 
             const width = maxX - minX;
             const height = maxY - minY;
@@ -224,9 +262,17 @@ const Canvas = React.forwardRef<HTMLCanvasElement, CanvasProps>(({
             tCtx.fillStyle = '#FFFFFF';
             tCtx.fillRect(0, 0, width, height);
 
-            // Draw cropped portion from original canvas
-            // drawImage(image, sx, sy, sWidth, sHeight, dx, dy, dWidth, dHeight)
-            tCtx.drawImage(canvas, minX, minY, width, height, 0, 0, width, height);
+            // Draw strokes manually relative to crop rect (World Space -> Crop Space)
+            // Translate context to shift everything by -minX, -minY
+            tCtx.translate(-minX, -minY);
+
+            strokes.forEach((s) => {
+                drawStroke(tCtx, s.points, s.color, s.size, s.isEraser);
+            });
+            // Include current stroke if any? Usually during sync we might not need pending stroke but safer to add.
+            if (currentPoints.length > 0) {
+                drawStroke(tCtx, currentPoints, color, size, tool === "eraser");
+            }
 
             return new Promise<Blob | null>((resolve) => tempCanvas.toBlob(resolve, type));
         },
@@ -237,38 +283,104 @@ const Canvas = React.forwardRef<HTMLCanvasElement, CanvasProps>(({
     // Pointer Events
     const handlePointerDown = (e: React.PointerEvent) => {
         e.currentTarget.setPointerCapture(e.pointerId);
+
+        // Track pointer
+        pointersRef.current.set(e.pointerId, { x: e.nativeEvent.offsetX, y: e.nativeEvent.offsetY });
+
+        // Check Gesture Start (2 fingers)
+        if (pointersRef.current.size === 2) {
+            isPanning.current = true;
+            setIsDrawing(false);
+            setCurrentPoints([]);
+            currentPointsRef.current = [];
+            return;
+        }
+
+        // Palm Rejection Logic
+        // If palmRejection is ON, we ignore single-finger TOUCH for drawing.
+        // We assume Pen has pointerType 'pen'.
+        if (palmRejection && e.pointerType === 'touch') {
+            return;
+        }
+
+        // Start Drawing
         setIsDrawing(true);
         setRedoStack([]);
 
-        const point = [e.nativeEvent.offsetX, e.nativeEvent.offsetY, e.pressure];
+        const worldPos = toWorld(e.nativeEvent.offsetX, e.nativeEvent.offsetY);
+        const point = [worldPos.x, worldPos.y, e.pressure];
+
         currentPointsRef.current = [point];
         setCurrentPoints([point]);
 
-        cursorPosRef.current = [e.nativeEvent.offsetX, e.nativeEvent.offsetY]; // Update pos even during down 
-        // setCursorPos(null); // Do NOT hide cursor, keep it for feedback if needed? 
-        // User said: "Eraser range visualization not showing while dragging".
-        // So we MUST keep it updating.
-
+        cursorPosRef.current = [e.nativeEvent.offsetX, e.nativeEvent.offsetY]; // Screen Space
         requestAnimationFrame(renderLoop);
     };
 
     const handlePointerMove = (e: React.PointerEvent) => {
-        const point = [e.nativeEvent.offsetX, e.nativeEvent.offsetY, e.pressure];
+        const prevPointers = new Map(pointersRef.current);
+        pointersRef.current.set(e.pointerId, { x: e.nativeEvent.offsetX, y: e.nativeEvent.offsetY });
+
+        if (isPanning.current && pointersRef.current.size === 2) {
+            const keys = Array.from(pointersRef.current.keys());
+            const p1Val = pointersRef.current.get(keys[0])!;
+            const p2Val = pointersRef.current.get(keys[1])!;
+            const p1Prev = prevPointers.get(keys[0]);
+            const p2Prev = prevPointers.get(keys[1]);
+
+            if (!p1Prev || !p2Prev) return;
+
+            const centerNow = getCenter(p1Val, p2Val);
+            const centerPrev = getCenter(p1Prev, p2Prev);
+            const distNow = getDistance(p1Val, p2Val);
+            const distPrev = getDistance(p1Prev, p2Prev);
+
+            // Pan Delta
+            const dx = centerNow.x - centerPrev.x;
+            const dy = centerNow.y - centerPrev.y;
+
+            // Zoom Delta
+            const scaleFactor = distNow / distPrev;
+
+            setTransform(prev => {
+                const focus = centerPrev;
+                let newK = prev.k * scaleFactor;
+                // Limit Zoom
+                if (newK < 0.1) newK = 0.1;
+                if (newK > 5) newK = 5;
+
+                return {
+                    x: focus.x - (focus.x - prev.x) * scaleFactor + dx,
+                    y: focus.y - (focus.y - prev.y) * scaleFactor + dy,
+                    k: newK
+                };
+            });
+            return;
+        }
 
         if (isDrawing) {
+            const worldPos = toWorld(e.nativeEvent.offsetX, e.nativeEvent.offsetY);
+            const point = [worldPos.x, worldPos.y, e.pressure];
             currentPointsRef.current.push(point);
-            // Eraser needs cursor update too!
-            cursorPosRef.current = point;
+            cursorPosRef.current = [e.nativeEvent.offsetX, e.nativeEvent.offsetY];
         } else {
-            cursorPosRef.current = point;
+            cursorPosRef.current = [e.nativeEvent.offsetX, e.nativeEvent.offsetY];
         }
         requestAnimationFrame(renderLoop);
     };
 
-    // ... rest same ...
-
     const handlePointerUp = (e: React.PointerEvent) => {
-        if (!isDrawing) return;
+        pointersRef.current.delete(e.pointerId);
+
+        if (pointersRef.current.size < 2) {
+            isPanning.current = false;
+        }
+
+        if (!isDrawing) {
+            e.currentTarget.releasePointerCapture(e.pointerId);
+            return;
+        }
+
         setIsDrawing(false);
         e.currentTarget.releasePointerCapture(e.pointerId);
 
@@ -276,13 +388,12 @@ const Canvas = React.forwardRef<HTMLCanvasElement, CanvasProps>(({
         const points = currentPointsRef.current;
         if (points.length > 0) {
             const newStroke: Stroke = {
-                points: [...points], // Copy
+                points: [...points],
                 color: color,
                 size: size,
                 isEraser: tool === "eraser",
             };
             setStrokes((prev) => [...prev, newStroke]);
-            // strokesRef will update via effect
         }
 
         currentPointsRef.current = [];

@@ -18,7 +18,7 @@ export default function Home() {
   const router = useRouter();
   const [tool, setTool] = useState<"pen" | "eraser">("pen");
   const [penSize, setPenSize] = useState(4);
-  const [eraserSize, setEraserSize] = useState(20);
+  const [eraserSize, setEraserSize] = useState(40);
 
   const currentSize = tool === "pen" ? penSize : eraserSize;
   const setSize = (s: number) => {

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Pen, Eraser, Trash2, ArrowRightLeft, Loader2, Info, Undo2, Redo2, HelpCircle } from "lucide-react";
+import { Pen, Eraser, Trash2, ArrowRightLeft, Loader2, Info, Undo2, Redo2, HelpCircle, Settings, X } from "lucide-react";
 import { clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 import { useLanguage } from "./contexts/LanguageContext";
@@ -17,7 +17,9 @@ interface ToolbarProps {
     onUndo?: () => void;
     onRedo?: () => void;
     onHelp?: () => void;
+    onSettings?: () => void;
     orientation?: "horizontal" | "vertical";
+    showTooltip?: boolean;
 }
 
 export function Toolbar({
@@ -33,7 +35,9 @@ export function Toolbar({
     onUndo,
     onRedo,
     onHelp,
-    orientation = "horizontal"
+    onSettings,
+    orientation = "horizontal",
+    showTooltip = true
 }: ToolbarProps) {
     const [activePopup, setActivePopup] = useState<"pen" | "eraser" | null>(null);
 
@@ -69,26 +73,33 @@ export function Toolbar({
     // Popup Styles based on orientation
     // Horizontal: Below button, centered
     // Vertical: Right of button (since bar is on Left), centered vertically
-    const popupBaseClasses = "toolbar-popup absolute bg-white rounded-xl shadow-xl border border-slate-200 p-4 w-60 z-[100] flex flex-col gap-4 animate-in fade-in";
-    const popupPosition = isVertical
-        ? "top-1/2 -translate-y-1/2 left-full ml-4 slide-in-from-left-2"
-        : "top-full left-1/2 -translate-x-1/2 mt-3 slide-in-from-top-2";
-
-    const arrowClasses = isVertical
-        ? "absolute top-1/2 -translate-y-1/2 -left-2 w-4 h-4 bg-white border-t border-l border-slate-200 -rotate-45"
-        : "absolute -top-2 left-1/2 -translate-x-1/2 w-4 h-4 bg-white border-t border-l border-slate-200 rotate-45";
+    // Popup Styles
+    // Use fixed positioning centered on screen for mobile robustness, or near button for desktop?
+    // User requested fix for "hidden" popups. Fixed centering is safest.
+    // Note: We use a simple centered modal style for the popup to avoid overflow issues.
+    const popupBaseClasses = "toolbar-popup fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white rounded-xl shadow-2xl border border-slate-200 p-6 w-72 z-[9999] flex flex-col gap-4 animate-in fade-in zoom-in-95";
+    // Overlay for closing
+    const Overlay = () => (
+        <div className="fixed inset-0 bg-black/20 z-[9990] backdrop-blur-[1px]" onClick={() => setActivePopup(null)} />
+    );
 
     return (
         <div className={twMerge(
-            "flex items-center gap-6 px-4",
-            // Reduced padding and gap for vertical mode to fit in tight landscape height
-            // Changed gap-2 to gap-1, w-14 to w-12. User requested even more compact: gap-0.5, w-10.
-            isVertical ? "flex-col h-auto py-1 w-full gap-0.5 px-0.5 justify-start min-h-0" : "h-full flex-row",
+            "flex items-center gap-4 px-4 overflow-x-auto no-scrollbar",
+            // Reduced padding and gap for vertical mode, allow wrap/scroll on small screens
+            // Tablet/Desktop: justify-evenly to spread buttons
+            // FIX: Use h-full and justify-start for vertical mode to ensure scrolling works on short screens (landscape phone)
+            isVertical
+                ? "flex-col h-full py-2 w-full gap-3 px-0.5 justify-start overflow-y-auto overflow-x-hidden"
+                : "h-full flex-row whitespace-nowrap md:justify-evenly md:overflow-visible",
             className
         )}>
+            {/* Overlay if popup active */}
+            {activePopup && <Overlay />}
+
             {/* Pen Tool */}
             <div className="relative flex flex-col items-center flex-shrink-0">
-                <Tooltip text={t("tip.pen")} disabled={!!activePopup} orientation={orientation}>
+                <Tooltip text={t("tip.pen")} disabled={!showTooltip || !!activePopup} orientation={orientation}>
                     <button
                         className={clsx(
                             "tool-btn rounded-lg transition-all flex flex-col items-center justify-center gap-0.5",
@@ -104,24 +115,24 @@ export function Toolbar({
 
                 {/* Popup */}
                 {activePopup === "pen" && (
-                    <div className={clsx(popupBaseClasses, popupPosition)}>
-                        <div className={arrowClasses} />
-                        <div>
-                            <div className="text-xs font-bold text-slate-400 mb-2 uppercase tracking-wider">{t("toolbar.size")}</div>
-                            <div className="flex justify-between bg-slate-100 p-1 rounded-lg">
-                                {PenSizes.map(s => (
-                                    <button
-                                        key={s}
-                                        onClick={() => setSize(s)}
-                                        className={clsx(
-                                            "flex-1 py-2 rounded-md flex items-center justify-center transition-all",
-                                            size === s ? "bg-white shadow text-blue-600" : "text-slate-400 hover:text-slate-600"
-                                        )}
-                                    >
-                                        <div className="bg-current rounded-full" style={{ width: s * 1.5, height: s * 1.5 }} />
-                                    </button>
-                                ))}
-                            </div>
+                    <div className={popupBaseClasses}>
+                        <div className="flex justify-between items-center">
+                            <div className="text-sm font-bold text-slate-700 uppercase tracking-wider">{t("toolbar.size")}</div>
+                            <button onClick={() => setActivePopup(null)} className="p-1 hover:bg-slate-100 rounded-full text-slate-400 hover:text-slate-600 transition-colors"><X size={16} /></button>
+                        </div>
+                        <div className="flex justify-between bg-slate-100 p-2 rounded-xl">
+                            {PenSizes.map(s => (
+                                <button
+                                    key={s}
+                                    onClick={() => setSize(s)}
+                                    className={clsx(
+                                        "flex-1 py-4 rounded-lg flex items-center justify-center transition-all",
+                                        size === s ? "bg-white shadow text-blue-600 ring-1 ring-blue-100" : "text-slate-400 hover:text-slate-600"
+                                    )}
+                                >
+                                    <div className="bg-current rounded-full" style={{ width: s * 2, height: s * 2 }} />
+                                </button>
+                            ))}
                         </div>
                     </div>
                 )}
@@ -129,7 +140,7 @@ export function Toolbar({
 
             {/* Eraser Tool */}
             <div className="relative flex flex-col items-center flex-shrink-0">
-                <Tooltip text={t("tip.eraser")} disabled={!!activePopup} orientation={orientation}>
+                <Tooltip text={t("tip.eraser")} disabled={!showTooltip || !!activePopup} orientation={orientation}>
                     <button
                         className={clsx(
                             "tool-btn rounded-lg transition-all flex flex-col items-center justify-center gap-0.5",
@@ -145,24 +156,24 @@ export function Toolbar({
 
                 {/* Popup */}
                 {activePopup === "eraser" && (
-                    <div className={clsx(popupBaseClasses, popupPosition)}>
-                        <div className={arrowClasses} />
-                        <div>
-                            <div className="text-xs font-bold text-slate-400 mb-2 uppercase tracking-wider">{t("toolbar.eraserSize")}</div>
-                            <div className="flex justify-between bg-slate-100 p-1 rounded-lg">
-                                {EraserSizes.map(s => (
-                                    <button
-                                        key={s}
-                                        onClick={() => setSize(s)}
-                                        className={clsx(
-                                            "flex-1 py-2 rounded-md flex items-center justify-center transition-all",
-                                            size === s ? "bg-white shadow text-blue-600" : "text-slate-400 hover:text-slate-600"
-                                        )}
-                                    >
-                                        <div className="bg-slate-300 rounded-full" style={{ width: s / 2, height: s / 2 }} />
-                                    </button>
-                                ))}
-                            </div>
+                    <div className={popupBaseClasses}>
+                        <div className="flex justify-between items-center">
+                            <div className="text-sm font-bold text-slate-700 uppercase tracking-wider">{t("toolbar.eraserSize")}</div>
+                            <button onClick={() => setActivePopup(null)} className="p-1 hover:bg-slate-100 rounded-full text-slate-400 hover:text-slate-600 transition-colors"><X size={16} /></button>
+                        </div>
+                        <div className="flex justify-between bg-slate-100 p-2 rounded-xl">
+                            {EraserSizes.map(s => (
+                                <button
+                                    key={s}
+                                    onClick={() => setSize(s)}
+                                    className={clsx(
+                                        "flex-1 py-4 rounded-lg flex items-center justify-center transition-all",
+                                        size === s ? "bg-white shadow text-blue-600 ring-1 ring-blue-100" : "text-slate-400 hover:text-slate-600"
+                                    )}
+                                >
+                                    <div className="bg-slate-300 rounded-full" style={{ width: s / 1.5, height: s / 1.5 }} />
+                                </button>
+                            ))}
                         </div>
                     </div>
                 )}
@@ -171,7 +182,7 @@ export function Toolbar({
             <div className={clsx("bg-slate-200 shrink-0", isVertical ? "w-8 h-px my-1" : "w-px h-8 mx-2")} />
 
             {/* Undo */}
-            <Tooltip text={t("tip.undo")} orientation={orientation}>
+            <Tooltip text={t("tip.undo")} orientation={orientation} disabled={!showTooltip}>
                 <button
                     onClick={onUndo}
                     className="p-2.5 text-slate-500 hover:bg-slate-100 rounded-full hover:text-blue-600 transition-colors"
@@ -181,7 +192,7 @@ export function Toolbar({
             </Tooltip>
 
             {/* Redo */}
-            <Tooltip text={t("tip.redo")} orientation={orientation}>
+            <Tooltip text={t("tip.redo")} orientation={orientation} disabled={!showTooltip}>
                 <button
                     onClick={onRedo}
                     className="p-2.5 text-slate-500 hover:bg-slate-100 rounded-full hover:text-blue-600 transition-colors"
@@ -193,7 +204,7 @@ export function Toolbar({
             <div className={clsx("bg-slate-200 shrink-0", isVertical ? "w-8 h-px my-1" : "w-px h-8 mx-2")} />
 
             {/* Clear */}
-            <Tooltip text={t("tip.clear")} orientation={orientation}>
+            <Tooltip text={t("tip.clear")} orientation={orientation} disabled={!showTooltip}>
                 <button
                     onClick={onClear}
                     className="p-2.5 text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-full transition-colors"
@@ -204,7 +215,7 @@ export function Toolbar({
 
             {/* Convert - Optional */}
             {onConvert && showConvert !== false && (
-                <Tooltip text={t("tip.convert")} orientation={orientation}>
+                <Tooltip text={t("tip.convert")} orientation={orientation} disabled={!showTooltip}>
                     <button
                         onClick={onConvert}
                         disabled={isConverting}
@@ -226,11 +237,25 @@ export function Toolbar({
                 </Tooltip>
             )}
 
+            {/* Settings Button (New) */}
+            {onSettings && (
+                <div className="relative flex flex-col items-center flex-shrink-0">
+                    <Tooltip text={t("header.settings")} disabled={!showTooltip} orientation={orientation}>
+                        <button
+                            onClick={onSettings}
+                            className="p-3 rounded-xl hover:bg-slate-100 text-slate-500 hover:text-slate-800 transition-colors"
+                        >
+                            <Settings size={22} />
+                        </button>
+                    </Tooltip>
+                </div>
+            )}
+
             {/* Help Button - New */}
             {onHelp && (
                 <>
                     <div className={clsx("bg-slate-200 shrink-0", isVertical ? "w-8 h-px my-1" : "w-px h-8 mx-2")} />
-                    <Tooltip text={t("toolbar.help")} orientation={orientation}>
+                    <Tooltip text={t("toolbar.help")} orientation={orientation} disabled={!showTooltip}>
                         <button
                             onClick={onHelp}
                             className="p-2.5 text-slate-500 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-colors"
