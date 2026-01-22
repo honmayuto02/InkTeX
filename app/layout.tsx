@@ -22,7 +22,7 @@ export const metadata: Metadata = {
     type: "website",
   },
   verification: {
-    google: PnqJIKgrLjaJWdQwMmXU0SRG-fJMWfDUafzW5DxwgBs 
+    google: "PnqJIKgrLjaJWdQwMmXU0SRG-fJMWfDUafzW5DxwgBs",
   },
 };
 
