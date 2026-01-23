@@ -100,8 +100,8 @@ export function ResultDisplay({ latex, onClose, onFeedback, variant = "floating"
             {/* Scrollable Content */}
             <div className={clsx(
                 "custom-scrollbar w-full",
-                // Inline mode: Flex column layout for centering
-                variant === "inline" ? "flex-1 flex flex-col min-h-0 pb-10" : "overflow-y-auto",
+                // Inline mode: Flex column layout for centering, but allow scroll if overflow
+                variant === "inline" ? "flex-1 flex flex-col min-h-0 pb-10 overflow-y-auto" : "overflow-y-auto",
                 compact ? "p-3 space-y-2" : (variant === "inline" ? "p-3 gap-2" : clsx("p-4 space-y-4 pb-12 transition-all", isExpanded ? "max-h-[80vh]" : "max-h-[60vh] md:max-h-[400px]"))
             )}>
 
