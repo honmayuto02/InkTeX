@@ -105,42 +105,44 @@ export function ResultDisplay({ latex, onClose, onFeedback, variant = "floating"
                 compact ? "p-3 space-y-2" : (variant === "inline" ? "p-3 gap-2" : clsx("p-4 space-y-4 pb-12 transition-all", isExpanded ? "max-h-[80vh]" : "max-h-[60vh] md:max-h-[400px]"))
             )}>
 
-                {!isEditing ? (
-                    <>
-                        {/* Rendered Math - Centered in Inline Mode */}
-                        <div
-                            className={clsx(
-                                "flex justify-center items-center overflow-x-auto custom-scrollbar-horizontal w-full",
-                                variant === "inline" ? "flex-1 min-h-0 my-auto" : (compact ? "py-1 min-h-[40px]" : "py-4 min-h-[80px]")
-                            )}
-                            dangerouslySetInnerHTML={{ __html: html }}
-                        />
+                {/* Always show content */}
+                <div>
+                    {/* Rendered Math - Centered in Inline Mode */}
+                    <div
+                        className={clsx(
+                            "flex justify-center items-center overflow-x-auto custom-scrollbar-horizontal w-full",
+                            variant === "inline" ? "flex-1 min-h-0 my-auto" : (compact ? "py-1 min-h-[40px]" : "py-4 min-h-[80px]")
+                        )}
+                        dangerouslySetInnerHTML={{ __html: html }}
+                    />
 
-                        {/* Code Block */}
-                        <div className={clsx("bg-slate-900 rounded-lg relative group flex-none", compact ? "p-2" : "p-3")}>
-                            {compact && (
-                                <button
-                                    onClick={handleCopy}
-                                    className="absolute top-1 right-1 text-slate-400 hover:text-white p-1 opacity-0 group-hover:opacity-100 transition-opacity z-10"
-                                    title="Copy Source"
-                                >
-                                    {copied ? <Check size={12} /> : <Copy size={12} />}
-                                </button>
-                            )}
-                            <code className={clsx("text-slate-100 font-mono break-all whitespace-pre-wrap block w-full custom-scrollbar",
-                                compact ? "text-xs max-h-16 overflow-y-auto" : (variant === "inline" ? "text-sm max-h-24 overflow-y-auto" : "text-sm")
-                            )}>
-                                {latex}
-                            </code>
-                        </div>
-                    </>
-                ) : (
-                    <div className="space-y-3 animate-in fade-in slide-in-from-bottom-2 duration-200">
+                    {/* Code Block */}
+                    <div className={clsx("bg-slate-900 rounded-lg relative group flex-none", compact ? "p-2" : "p-3")}>
+                        {compact && (
+                            <button
+                                onClick={handleCopy}
+                                className="absolute top-1 right-1 text-slate-400 hover:text-white p-1 opacity-0 group-hover:opacity-100 transition-opacity z-10"
+                                title="Copy Source"
+                            >
+                                {copied ? <Check size={12} /> : <Copy size={12} />}
+                            </button>
+                        )}
+                        <code className={clsx("text-slate-100 font-mono break-all whitespace-pre-wrap block w-full custom-scrollbar",
+                            compact ? "text-xs max-h-16 overflow-y-auto" : (variant === "inline" ? "text-sm max-h-24 overflow-y-auto" : "text-sm")
+                        )}>
+                            {latex}
+                        </code>
+                    </div>
+                </div>
+
+                {/* Feedback Form - Shown BELOW content */}
+                {isEditing && (
+                    <div className="pt-4 border-t border-slate-100 mt-2 space-y-3 animate-in fade-in slide-in-from-bottom-2 duration-200 pb-2">
                         <div className="text-xs font-bold text-slate-500">{t("result.feedback_prompt")}</div>
                         <textarea
                             value={editValue}
                             onChange={(e) => setEditValue(e.target.value)}
-                            className="w-full h-32 p-3 bg-slate-50 border border-slate-200 rounded-lg font-mono text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            className="w-full h-24 p-3 bg-slate-50 border border-slate-200 rounded-lg font-mono text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                             placeholder="\int..."
                         />
                         <div className="flex gap-2">
