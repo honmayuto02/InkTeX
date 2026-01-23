@@ -138,7 +138,7 @@ export default function HostPage() {
                 if (data && data.lastUpdated > lastUpdated) {
                     setLastUpdated(data.lastUpdated);
                     if (data.imageData) {
-                        processImage(data.imageData);
+                        processImage(data.imageData, data.calibrationData);
                     }
                 }
             } catch (e) {
@@ -162,7 +162,7 @@ export default function HostPage() {
         return res; // Return Raw Response
     };
 
-    const processImage = async (dataUrl: string) => {
+    const processImage = async (dataUrl: string, clientCalibration?: string) => {
         setProcessing(true);
         try {
             const res = await fetch(dataUrl);
@@ -170,6 +170,35 @@ export default function HostPage() {
 
             const formData = new FormData();
             formData.append("image", blob);
+
+            // Handle Calibration
+            // 1. Try Client Calibration first
+            // 2. Fallback to Host Calibration
+            let calibrationToUse = clientCalibration;
+            if (!calibrationToUse) {
+                calibrationToUse = localStorage.getItem("inktext_calibration") || undefined;
+            }
+
+            if (calibrationToUse) {
+                try {
+                    // Check if JSON
+                    let calUrl = calibrationToUse;
+                    let label = "\\int_{-\\infty}^{\\infty} e^{-x^2} dx"; // Default
+
+                    if (calibrationToUse.startsWith("{")) {
+                        const parsed = JSON.parse(calibrationToUse);
+                        calUrl = parsed.image;
+                        label = parsed.label || label;
+                    }
+
+                    const calRes = await fetch(calUrl);
+                    const calBlob = await calRes.blob();
+                    formData.append("calibrationImage", calBlob);
+                    formData.append("calibrationLabel", label);
+                } catch (e) {
+                    console.warn("Failed to attach calibration", e);
+                }
+            }
 
             const apiRes = await callGeminiWithRetry(formData);
             const apiData = await apiRes.json();

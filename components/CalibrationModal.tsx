@@ -45,6 +45,30 @@ const CALIBRATION_SECTIONS = [
             "\\phi \\quad \\emptyset \\quad 0", // phi, empty set, 0
             "\\omega \\quad w" // omega, w
         ]
+    },
+    {
+        id: "whiteout",
+        title: "白抜き文字 (Blackboard Bold)",
+        description: "\\mathbb{R}, \\mathbb{N} などの白抜き文字の練習です。",
+        examples: [
+            "\\mathbb{R}", // R
+            "\\mathbb{N}", // N
+            "\\mathbb{Z}", // Z
+            "\\mathbb{Q}", // Q
+            "\\mathbb{C}", // C
+            "x \\in \\mathbb{R}^n" // Vector space
+        ]
+    },
+    {
+        id: "special",
+        title: "特殊文字 (Fraktur/Calligraphic)",
+        description: "\\mathfrak{g}, \\mathcal{H} などの特殊フォントの練習です。",
+        examples: [
+            "\\mathcal{L} \\quad \\mathcal{H} \\quad \\mathcal{F}", // Lagrangian, Hamiltonian, Fourier
+            "\\mathfrak{g} \\quad \\mathfrak{so}(3)", // Lie algebra
+            "\\mathscr{A} \\quad \\mathscr{B}", // Script (might fallback if font not available, but katex supports it)
+            "\\nabla \\times \\vec{A}" // Vector notation often stylized
+        ]
     }
 ];
 

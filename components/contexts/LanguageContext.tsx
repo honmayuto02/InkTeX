@@ -80,6 +80,10 @@ const translations: Dictionary = {
     "cal.desc.complex": { ja: "積分、極限、行列など、構造が複雑な数式の練習です。", en: "Practice complex structures like integrals and matrices." },
     "cal.sec.ambiguous": { ja: "紛らわしい記号", en: "Ambiguous Symbols" },
     "cal.desc.ambiguous": { ja: "AIが誤認識しやすい似た形の記号の書き分けを練習します。", en: "Practice distinguishing similar symbols." },
+    "cal.sec.whiteout": { ja: "白抜き文字", en: "Blackboard Bold" },
+    "cal.desc.whiteout": { ja: "\\mathbb{R} や \\mathbb{N} などの白抜き文字（黒板太字）の練習です。", en: "Practice Blackboard Bold characters like \\mathbb{R}." },
+    "cal.sec.special": { ja: "特殊文字", en: "Special Characters" },
+    "cal.desc.special": { ja: "\\mathfrak{g} (フラクトゥール) や \\mathcal{H} (花文字) などの特殊なフォントの練習です。", en: "Practice special fonts like Fraktur and Calligraphic." },
 
     // Errors
     "err.rate_limit_title": { ja: "アクセス集中", en: "High Traffic" },

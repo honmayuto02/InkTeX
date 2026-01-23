@@ -239,8 +239,6 @@ export default function Home() {
       <div
         className="relative w-full h-[85vh] z-0 bg-[#f9f9f9] cursor-crosshair overflow-hidden touch-none"
         style={{
-          backgroundImage: "radial-gradient(#cbd5e1 1px, transparent 1px)",
-          backgroundSize: "24px 24px", // Grid dots
           touchAction: "none" // Prevents scrolling while drawing on touch devices
         }}
       >

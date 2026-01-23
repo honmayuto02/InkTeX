@@ -5,6 +5,7 @@ import Canvas from "@/components/Canvas";
 import { Toolbar } from "@/components/Toolbar";
 import { Send, Check, Settings } from "lucide-react";
 import { ClientSettingsModal } from "@/components/ClientSettingsModal";
+import { CalibrationModal } from "@/components/CalibrationModal";
 
 import { ErrorPopup } from "@/components/ErrorPopup";
 
@@ -33,6 +34,8 @@ export default function ClientPage({ params }: { params: Promise<{ sessionId: st
     const [palmRejection, setPalmRejection] = useState(false);
     // Settings Modal
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+    // Calibration Modal
+    const [isCalibrationOpen, setIsCalibrationOpen] = useState(false);
 
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const [canvasKey, setCanvasKey] = useState(0);
@@ -80,6 +83,16 @@ export default function ClientPage({ params }: { params: Promise<{ sessionId: st
             const formData = new FormData();
             formData.append("image", blob);
 
+            // Attach Calibration Data if available
+            const calibrationData = localStorage.getItem("inktext_calibration");
+            if (calibrationData) {
+                // Should we parse it to ensure it's valid?
+                // Just send it as string, backend can handle it or just store it.
+                // However, our API might expect specific fields.
+                // Let's send it as a field 'calibrationData'
+                formData.append("calibrationData", calibrationData);
+            }
+
             const res = await fetch(`/api/sync?action=upload&sessionId=${sessionId}`, {
                 method: "POST",
                 body: formData
@@ -118,16 +131,23 @@ export default function ClientPage({ params }: { params: Promise<{ sessionId: st
                 onClose={() => setIsSettingsOpen(false)}
                 palmRejection={palmRejection}
                 onTogglePalmRejection={() => setPalmRejection(!palmRejection)}
+                onOpenCalibration={() => {
+                    setIsSettingsOpen(false);
+                    setIsCalibrationOpen(true);
+                }}
             />
 
+            {isCalibrationOpen && (
+                <CalibrationModal
+                    onClose={() => setIsCalibrationOpen(false)}
+                    onSave={() => {
+                        // Optional: maybe show toast on client? Modal handles toast itself.
+                    }}
+                />
+            )}
+
             {/* Canvas Layer - Full Screen */}
-            <div
-                className="absolute inset-0 z-0 bg-[#f9f9f9]"
-                style={{
-                    backgroundImage: "radial-gradient(#cbd5e1 1px, transparent 1px)",
-                    backgroundSize: "24px 24px"
-                }}
-            >
+            <div className="absolute inset-0 z-0 bg-[#f9f9f9]">
                 <Canvas
                     key={canvasKey}
                     ref={canvasRef}

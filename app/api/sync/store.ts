@@ -15,6 +15,7 @@ export interface SessionData {
     createdAt: number;
     lastUpdated: number;
     imageData?: string; // Base64
+    calibrationData?: string; // Data URL of calibration image from client
 }
 
 const memoryStore = global._inkTexStore;

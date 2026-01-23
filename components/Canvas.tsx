@@ -19,6 +19,7 @@ interface CanvasProps {
     minZoom?: number;
     maxZoom?: number;
     panBounds?: number;
+    showGrid?: boolean;
 }
 
 const Canvas = React.forwardRef<HTMLCanvasElement, CanvasProps>(({
@@ -30,6 +31,7 @@ const Canvas = React.forwardRef<HTMLCanvasElement, CanvasProps>(({
     minZoom = 0.5,
     maxZoom = 3,
     panBounds = 5000,
+    showGrid = true,
 }, ref) => {
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const [strokes, setStrokes] = useState<Stroke[]>([]);
@@ -98,6 +100,34 @@ const Canvas = React.forwardRef<HTMLCanvasElement, CanvasProps>(({
         // Apply Zoom/Pan
         const t = transformRef.current;
         ctx.setTransform(t.k, 0, 0, t.k, t.x, t.y);
+
+        // Draw Grid if enabled
+        if (showGrid) {
+            ctx.save();
+            ctx.fillStyle = "#cbd5e1"; // Slate-300 matches previous CSS
+            const gridSize = 24;
+            const dotSize = 1; // 1px radius = 2px diameter? CSS was 1px. Let's try 0.5 radius to match 1px dot. or 1px rect.
+
+            // Calculate Visible Area in World Coordinates
+            // Visible X: -t.x / t.k  to  (canvas.width - t.x) / t.k
+            // Visible Y: -t.y / t.k  to  (canvas.height - t.y) / t.k
+            const startX = Math.floor((-t.x / t.k) / gridSize) * gridSize;
+            const endX = Math.ceil(((canvas.width - t.x) / t.k) / gridSize) * gridSize;
+            const startY = Math.floor((-t.y / t.k) / gridSize) * gridSize;
+            const endY = Math.ceil(((canvas.height - t.y) / t.k) / gridSize) * gridSize;
+
+            for (let x = startX; x <= endX; x += gridSize) {
+                for (let y = startY; y <= endY; y += gridSize) {
+                    ctx.beginPath();
+                    ctx.arc(x, y, 1, 0, Math.PI * 2); // 1px radius = 2px dot, slightly bigger than CSS but clearer?
+                    // CSS was radial-gradient(#cbd5e1 1px, transparent 1px).
+                    // This creates a circle of 1px radius (2px diameter) if stops are exact, or soft edge.
+                    // Let's stick to arc(x,y, 0.8) for crisp small dots.
+                    ctx.fill();
+                }
+            }
+            ctx.restore();
+        }
 
         // Strokes
         strokesRef.current.forEach((s) => {
