@@ -34,6 +34,21 @@ export default function Home() {
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [canvasKey, setCanvasKey] = useState(0);
+  const [autoCopy, setAutoCopy] = useState(false);
+
+  // Load Auto Copy setting
+  React.useEffect(() => {
+    const saved = localStorage.getItem("inktex_autocopy");
+    if (saved) {
+      setAutoCopy(saved === "true");
+    }
+  }, []);
+
+  const toggleAutoCopy = () => {
+    const newVal = !autoCopy;
+    setAutoCopy(newVal);
+    localStorage.setItem("inktex_autocopy", String(newVal));
+  };
 
   const handleClear = () => {
     if (confirm("キャンバスを消去しますか？")) {
@@ -81,7 +96,7 @@ export default function Home() {
       const canvas = canvasRef.current as any;
       let blob = null;
       if (canvas && canvas.exportImage) {
-        blob = await canvas.exportImage();
+        blob = await canvas.exportImage('image/jpeg', 0.8);
       } else {
         // Fallback
         blob = await new Promise<Blob | null>((resolve) =>
@@ -121,6 +136,10 @@ export default function Home() {
       // Use retry helper
       const data = await callGeminiWithRetry(formData);
       setLatexResult(data.latex || "No result");
+
+      if (autoCopy && data.latex) {
+        navigator.clipboard.writeText(data.latex).catch(err => console.error("Auto Copy failed:", err));
+      }
 
     } catch (error: any) {
       console.error("Conversion failed:", error);
@@ -307,6 +326,8 @@ export default function Home() {
       {showSettings && (
         <SettingsModal
           onClose={() => setShowSettings(false)}
+          autoCopy={autoCopy}
+          onToggleAutoCopy={toggleAutoCopy}
         />
       )}
 

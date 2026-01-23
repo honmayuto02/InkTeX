@@ -1,15 +1,17 @@
 "use client";
 
 import React from "react";
-import { X, Languages } from "lucide-react";
+import { X, Languages, Clipboard, Check } from "lucide-react";
 import { useLanguage } from "./contexts/LanguageContext";
 import { clsx } from "clsx";
 
 interface SettingsModalProps {
     onClose: () => void;
+    autoCopy: boolean;
+    onToggleAutoCopy: () => void;
 }
 
-export function SettingsModal({ onClose }: SettingsModalProps) {
+export function SettingsModal({ onClose, autoCopy, onToggleAutoCopy }: SettingsModalProps) {
     const { t, lang, setLang } = useLanguage();
 
     return (
@@ -56,6 +58,36 @@ export function SettingsModal({ onClose }: SettingsModalProps) {
                                 English
                             </button>
                         </div>
+                    </div>
+
+                    {/* Auto Copy Setting */}
+                    <div>
+                        <div className="flex items-center gap-2 mb-3 text-slate-600 font-bold">
+                            <Clipboard size={18} />
+                            <span>{t("settings.auto_copy")}</span>
+                        </div>
+                        <button
+                            onClick={onToggleAutoCopy}
+                            className={clsx(
+                                "w-full flex items-center justify-between p-3 rounded-xl border transition-all",
+                                autoCopy
+                                    ? "bg-blue-50 border-blue-300 text-blue-700"
+                                    : "bg-white border-slate-200 hover:border-slate-300 text-slate-700"
+                            )}
+                        >
+                            <span className="font-bold text-sm">
+                                {autoCopy ? "ON" : "OFF"}
+                            </span>
+                            <div className={clsx(
+                                "w-10 h-6 rounded-full relative transition-colors shadow-inner",
+                                autoCopy ? "bg-blue-600" : "bg-slate-300"
+                            )}>
+                                <div className={clsx(
+                                    "absolute top-1 w-4 h-4 bg-white rounded-full transition-all shadow-sm",
+                                    autoCopy ? "left-5" : "left-1"
+                                )} />
+                            </div>
+                        </button>
                     </div>
                 </div>
 

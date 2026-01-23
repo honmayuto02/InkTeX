@@ -35,6 +35,7 @@ const translations: Dictionary = {
     "settings.palm": { ja: "パームリジェクション", en: "Palm Rejection" },
     "settings.palm_on": { ja: "オン (ペンのみ)", en: "On (Pen Only)" },
     "settings.palm_off": { ja: "オフ (タッチも反応)", en: "Off (Touch & Pen)" },
+    "settings.auto_copy": { ja: "変換結果を自動コピー", en: "Auto Copy Result" },
 
     // Result
     "result.title": { ja: "変換結果", en: "Result" },
@@ -74,6 +75,7 @@ const translations: Dictionary = {
     "msg.cal_complete": { ja: "すべてのキャリブレーションが完了しました！", en: "All calibration sections completed!" },
     "msg.cal_storage_error": { ja: "保存に失敗しました。ストレージ容量が足りない可能性があります。", en: "Failed to save. Storage might be full." },
     "cal.skip": { ja: "スキップ", en: "Skip" },
+    "cal.instruction_write": { ja: "以下の文字を右側のキャンバスに書いてください", en: "Write the character below on the right canvas" },
 
     // Calibration Sections
     "cal.sec.complex": { ja: "複雑な数式", en: "Complex Formulas" },

@@ -74,16 +74,43 @@ export async function POST(req: NextRequest) {
         promptParts.push("This is the input image (Image 2). Convert this to LaTeX.");
 
         const genAI = new GoogleGenerativeAI(apiKey);
-        // Use Gemin 2.5 Flash
-        const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
-        const result = await model.generateContent(promptParts);
+        // Model priority list for fallback
+        // 1. gemini-2.5-flash
+        // 2. gemini-2.5-flash-lite
+        // 3. gemini-2.5-pro
+        // 4. gemini-2.0-flash
+        const MODELS = ["gemini-2.5-flash", "gemini-2.5-flash-lite", "gemini-2.5-pro", "gemini-2.0-flash"];
 
-        const responseText = result.response.text();
-        // Clean up response if it contains markdown blocks despite instructions
-        const cleanLatex = responseText.replace(/```latex|```/g, "").trim();
+        let lastError: any = null;
 
-        return NextResponse.json({ latex: cleanLatex });
+        for (const modelName of MODELS) {
+            try {
+                console.log(`Attempting with model: ${modelName}`);
+                const model = genAI.getGenerativeModel({ model: modelName });
+                const result = await model.generateContent(promptParts);
+                const responseText = result.response.text();
+
+                // Clean up response
+                const cleanLatex = responseText.replace(/```latex|```/g, "").trim();
+                console.log(`Success with model: ${modelName}`);
+
+                return NextResponse.json({ latex: cleanLatex });
+
+            } catch (error: any) {
+                console.warn(`Model ${modelName} failed:`, error.message);
+                lastError = error;
+                // Continue to next model
+            }
+        }
+
+        // If all failed
+        console.error("All Gemini models failed.");
+        const errorMessage = lastError?.message || lastError?.toString() || "All models failed to process image";
+        return NextResponse.json(
+            { error: errorMessage },
+            { status: 500 }
+        );
 
     } catch (error: any) {
         console.error("Gemini API Error:", error);

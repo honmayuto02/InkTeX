@@ -67,5 +67,23 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ success: true });
     }
 
+    if (action === "update_settings" && sessionId) {
+        const session = await store.get(sessionId);
+        if (!session) {
+            return NextResponse.json({ error: "Session not found" }, { status: 404 });
+        }
+
+        const body = await req.json();
+        const settings = body.settings;
+
+        if (settings) {
+            session.settings = { ...(session.settings || {}), ...settings };
+            session.lastUpdated = Date.now(); // Trigger poll update
+            await store.set(sessionId, session);
+        }
+
+        return NextResponse.json({ success: true, settings: session.settings });
+    }
+
     return NextResponse.json({ error: "Invalid request" }, { status: 400 });
 }

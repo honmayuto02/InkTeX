@@ -3,7 +3,7 @@
 import React, { useState, useRef } from "react";
 import Canvas from "@/components/Canvas";
 import { Toolbar } from "@/components/Toolbar";
-import { Save, RefreshCw, CheckCircle2, AlertTriangle, BookOpen } from "lucide-react";
+import { Save, RefreshCw, CheckCircle2, AlertTriangle, PenTool } from "lucide-react";
 import katex from "katex";
 import { clsx } from "clsx";
 import { useLanguage } from "./contexts/LanguageContext";
@@ -29,7 +29,7 @@ const CALIBRATION_SECTIONS = [
             "\\det(A - \\lambda I) = 0", // Eigenvalue equation
             "\\nabla \\times \\mathbf{E} = -\\frac{\\partial \\mathbf{B}}{\\partial t}", // Maxwell (Faraday)
             "i\\hbar \\frac{\\partial}{\\partial t} \\Psi = \\hat{H} \\Psi", // Schrödinger
-            "\\sum_{i=1}^{n} i^3 = \\left( \\frac{n(n+1)}{2} \\right)^2" // Summation identity
+            "\\sum_{k=1}^{n} k^3 = \\left( \\frac{n(n+1)}{2} \\right)^2" // Summation identity
         ]
     },
     {
@@ -38,7 +38,7 @@ const CALIBRATION_SECTIONS = [
         description: "AIが誤認識しやすい似た形の記号の書き分けを練習します。",
         examples: [
             "x \\quad \\chi \\quad \\times", // x, chi, times
-            "v \\quad \\nu \\quad \\upsilon", // v, nu, upsilon
+            "v \\quad \\nu", // v, nu
             "q \\quad 9 \\quad g", // q, 9, g
             "z \\quad 2", // z, 2
             "l \\quad 1 \\quad I", // l, 1, I
@@ -64,10 +64,9 @@ const CALIBRATION_SECTIONS = [
         title: "特殊文字 (Fraktur/Calligraphic)",
         description: "\\mathfrak{g}, \\mathcal{H} などの特殊フォントの練習です。",
         examples: [
-            "\\mathcal{L} \\quad \\mathcal{H} \\quad \\mathcal{F}", // Lagrangian, Hamiltonian, Fourier
-            "\\mathfrak{g} \\quad \\mathfrak{so}(3)", // Lie algebra
-            "\\mathscr{A} \\quad \\mathscr{B}", // Script (might fallback if font not available, but katex supports it)
-            "\\nabla \\times \\vec{A}" // Vector notation often stylized
+            "\\mathfrak{X} \\quad \\mathfrak{Y} \\quad \\mathfrak{Z}", // Fraktur Variables
+            "\\mathfrak{A} \\quad \\mathfrak{B} \\quad \\mathfrak{C}", // Fraktur Sets/Algebras
+            "\\mathcal{F} \\quad \\mathcal{H} \\quad \\mathcal{L}" // Common Calligraphic
         ]
     }
 ];
@@ -76,6 +75,7 @@ export function CalibrationModal({ onClose, onSave }: CalibrationModalProps) {
     const { t } = useLanguage();
     const [currentSectionIdx, setCurrentSectionIdx] = useState(0);
     const [currentExampleIdx, setCurrentExampleIdx] = useState(0);
+    const [completedSections, setCompletedSections] = useState<string[]>([]);
 
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const [toastMessage, setToastMessage] = useState<string | null>(null);
@@ -98,21 +98,58 @@ export function CalibrationModal({ onClose, onSave }: CalibrationModalProps) {
         return katex.renderToString(currentExample, { throwOnError: false, displayMode: true });
     }, [currentExample]);
 
-    const handleNextExample = () => {
+    const handleNextExample = (skipped = false) => {
         // Next example in current section
         if (currentExampleIdx < currentSection.examples.length - 1) {
             setCurrentExampleIdx(prev => prev + 1);
         } else {
-            // End of section, try next section
-            if (currentSectionIdx < CALIBRATION_SECTIONS.length - 1) {
-                if (confirm(t("msg.cal_next_section"))) {
-                    setCurrentSectionIdx(prev => prev + 1);
-                    setCurrentExampleIdx(0);
+            // End of section
+
+            // Mark as complete ONLY if not skipped
+            const newCompleted = [...completedSections];
+            if (!skipped && !newCompleted.includes(currentSection.id)) {
+                newCompleted.push(currentSection.id);
+                setCompletedSections(newCompleted);
+            }
+
+            // Find next target: The first INCOMPLETE section
+            // We search forward from current + 1, then wrap around
+            const allSections = CALIBRATION_SECTIONS;
+            let targetIdx = -1;
+
+            // Search forward
+            for (let i = currentSectionIdx + 1; i < allSections.length; i++) {
+                if (!newCompleted.includes(allSections[i].id)) {
+                    targetIdx = i;
+                    break;
                 }
+            }
+            // If not found, wrap around (search from 0 to current)
+            if (targetIdx === -1) {
+                for (let i = 0; i < currentSectionIdx; i++) {
+                    if (!newCompleted.includes(allSections[i].id)) {
+                        targetIdx = i;
+                        break;
+                    }
+                }
+            }
+
+            if (targetIdx !== -1) {
+                // Determine if we should move
+                // If we skipped, we definitely want to move if possible or loop
+                setCurrentSectionIdx(targetIdx);
+                setCurrentExampleIdx(0);
             } else {
-                // All done
-                addToToast(t("msg.cal_complete"));
-                setTimeout(onClose, 1500);
+                // No other incomplete sections found
+                if (!newCompleted.includes(currentSection.id)) {
+                    // We skipped the last item of the ONLY incomplete section (current)
+                    // Restart it
+                    setCurrentExampleIdx(0);
+                } else {
+                    // All done
+                    addToToast(t("msg.cal_complete"));
+                    setTimeout(onClose, 1500);
+                }
             }
         }
     };
@@ -182,6 +219,7 @@ export function CalibrationModal({ onClose, onSave }: CalibrationModalProps) {
     const handleClearCalibration = () => {
         if (confirm(t("msg.cal_reset_confirm"))) {
             localStorage.removeItem("inktext_calibration");
+            setCompletedSections([]); // Reset local state too
             addToToast(t("msg.cal_reset"));
             onSave();
         }
@@ -202,7 +240,7 @@ export function CalibrationModal({ onClose, onSave }: CalibrationModalProps) {
                 <div className="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50 relative shrink-0">
                     <div className="z-10 bg-slate-50 flex items-center gap-3">
                         <div className="bg-blue-100 p-2 rounded-lg text-blue-700">
-                            <BookOpen size={20} />
+                            <PenTool size={20} />
                         </div>
                         <div>
                             <h2 className="text-lg font-bold text-slate-800 leading-tight">{t("cal.title")}</h2>
@@ -241,9 +279,9 @@ export function CalibrationModal({ onClose, onSave }: CalibrationModalProps) {
                     {/* Left: Sidebar & Instruction */}
                     <div className="md:w-80 bg-slate-50 border-r border-slate-200 flex flex-col overflow-hidden shrink-0">
 
-                        {/* Section Selector */}
-                        <div className="p-4 space-y-2 overflow-y-auto max-h-[40vh] border-b border-slate-200">
-                            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">{t("cal.section_select")}</h3>
+                        {/* Section Selector - Hidden on Mobile to save space */}
+                        <div className="p-2 space-y-1 overflow-y-auto max-h-[40vh] border-b border-slate-200 shrink-0 hidden md:block">
+                            <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2 px-1">{t("cal.section_select")}</h3>
                             {CALIBRATION_SECTIONS.map((section, idx) => (
                                 <button
                                     key={section.id}
@@ -252,55 +290,70 @@ export function CalibrationModal({ onClose, onSave }: CalibrationModalProps) {
                                         setCurrentExampleIdx(0);
                                     }}
                                     className={clsx(
-                                        "w-full text-left p-3 rounded-lg text-sm font-medium transition-all border",
+                                        "w-full text-left px-3 py-2 rounded-md text-xs font-medium transition-all border",
                                         currentSectionIdx === idx
                                             ? "bg-white border-blue-200 text-blue-700 shadow-sm"
                                             : "border-transparent text-slate-600 hover:bg-slate-100"
                                     )}
                                 >
-                                    <div className="flex justify-between items-center mb-1">
+                                    <div className="flex justify-between items-center">
                                         <span>{t(`cal.sec.${section.id}`)}</span>
-                                        {currentSectionIdx > idx && <CheckCircle2 size={14} className="text-green-500" />}
-                                    </div>
-                                    <div className="text-[10px] text-slate-400 line-clamp-1">
-                                        {t(`cal.desc.${section.id}`)}
+                                        {completedSections.includes(section.id) && <CheckCircle2 size={12} className="text-green-500" />}
                                     </div>
                                 </button>
                             ))}
                         </div>
 
                         {/* Current Example View */}
-                        <div className="p-6 flex flex-col gap-4 overflow-y-auto flex-1 bg-white">
-                            <div>
+                        <div className="p-3 md:p-6 flex flex-col gap-2 md:gap-4 overflow-y-auto flex-1 bg-white">
+                            {/* Mobile Only Section Header */}
+                            <div className="md:hidden flex items-center gap-2 mb-1">
+                                <span className="bg-blue-100 text-blue-700 text-[10px] px-2 py-0.5 rounded-full font-bold whitespace-nowrap">
+                                    {t("cal.section_select")}
+                                </span>
+                                <span className="font-bold text-slate-800 text-sm truncate">
+                                    {t(`cal.sec.${currentSection.id}`)}
+                                </span>
+                            </div>
+
+                            <div className="hidden md:block">
                                 <h3 className="font-bold text-slate-800 text-lg mb-1">{t(`cal.sec.${currentSection.id}`)}</h3>
                                 <p className="text-sm text-slate-500">{t(`cal.desc.${currentSection.id}`)}</p>
                             </div>
 
                             <div className="flex items-center justify-between text-xs font-mono text-slate-400">
                                 <span>{t("cal.example")} {currentExampleIdx + 1}/{currentSection.examples.length}</span>
-                                <button onClick={handleNextExample} className="hover:text-blue-500 flex items-center gap-1">
+                                <button onClick={() => handleNextExample(true)} className="hover:text-blue-500 flex items-center gap-1">
                                     <RefreshCw size={12} /> {t("cal.skip")}
                                 </button>
                             </div>
 
-                            <div className="relative group min-h-[120px] flex items-center justify-center bg-slate-50 rounded-xl border-2 border-dashed border-slate-200 p-4">
-                                <div dangerouslySetInnerHTML={{ __html: sampleHtml }} />
+                            <div className="bg-blue-50 border border-blue-100 rounded-lg p-2 md:p-3 text-center mb-1">
+                                <p className="text-xs md:text-sm font-bold text-blue-800">
+                                    👉 {t("cal.instruction_write")}
+                                </p>
                             </div>
 
-                            <div className="mt-auto pt-4 space-y-3">
-                                <button
-                                    onClick={handleSave}
-                                    className="w-full py-3 bg-[#28426d] text-white rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-[#1e3252] transition-all shadow-md active:scale-95"
-                                >
-                                    <Save size={18} />
-                                    {t("cal.save_next")}
-                                </button>
+                            <div className="relative group min-h-[80px] md:min-h-[120px] flex items-center justify-center bg-white rounded-xl border border-slate-200 shadow-sm p-4">
+                                <div className="text-sm md:text-base" dangerouslySetInnerHTML={{ __html: sampleHtml }} />
+                            </div>
+
+                            <div className="mt-auto pt-4 space-y-4">
+                                <div className="flex justify-center">
+                                    <button
+                                        onClick={handleSave}
+                                        className="px-12 py-3 bg-[#28426d] text-white rounded-full font-bold flex items-center gap-3 hover:bg-[#1e3252] transition-all shadow-lg active:scale-95"
+                                    >
+                                        <Save size={18} />
+                                        <span className="tracking-widest">{t("cal.save_next")}</span>
+                                    </button>
+                                </div>
                                 <button
                                     onClick={handleClearCalibration}
                                     className="w-full py-2 text-red-400 hover:text-red-600 text-xs flex items-center justify-center gap-1 hover:bg-red-50 rounded-lg transition-colors"
                                 >
                                     <AlertTriangle size={12} />
-                                    {t("cal.reset_data")}
+                                    <span>{t("cal.reset_data")}</span>
                                 </button>
                             </div>
                         </div>

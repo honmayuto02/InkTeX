@@ -3,7 +3,8 @@
 import React, { useEffect, useState } from "react";
 import { QRCodeSVG } from "qrcode.react";
 import { ResultDisplay } from "@/components/ResultDisplay";
-import { Loader2, Maximize2, Minimize2 } from "lucide-react";
+import { Loader2, Maximize2, Minimize2, Settings } from "lucide-react";
+import { SettingsModal } from "@/components/SettingsModal";
 
 import { ErrorPopup } from "@/components/ErrorPopup";
 
@@ -37,6 +38,38 @@ export default function HostPage() {
     const [lastSessionId, setLastSessionId] = useState<string | null>(null);
     const [manualId, setManualId] = useState("");
     const [isManualEntry, setIsManualEntry] = useState(false);
+    const [showSettings, setShowSettings] = useState(false);
+    const [autoCopy, setAutoCopy] = useState(false);
+
+    // Sync AutoCopy with LocalStorage & Server
+    const updateAutoCopy = async (val: boolean, pushToServer = true) => {
+        setAutoCopy(val);
+        if (typeof window !== 'undefined') {
+            localStorage.setItem("inktex_autocopy", String(val));
+        }
+
+        if (pushToServer && sessionId) {
+            try {
+                await fetch(`/api/sync?action=update_settings&sessionId=${sessionId}`, {
+                    method: "POST",
+                    body: JSON.stringify({ settings: { autoCopy: val } })
+                });
+            } catch (e) {
+                console.error("Failed to sync settings", e);
+            }
+        }
+    };
+
+    // Ref to prevent re-processing same image on settings sync
+    const lastProcessedImageRef = React.useRef<string | null>(null);
+
+    // Initial Load
+    useEffect(() => {
+        const saved = typeof window !== 'undefined' ? localStorage.getItem("inktex_autocopy") : null;
+        if (saved) {
+            setAutoCopy(saved === "true");
+        }
+    }, []);
 
     // Initialize Session logic extracted to function
     const startSession = async (customId?: string) => {
@@ -137,8 +170,21 @@ export default function HostPage() {
 
                 if (data && data.lastUpdated > lastUpdated) {
                     setLastUpdated(data.lastUpdated);
-                    if (data.imageData) {
+                    if (data.imageData && data.imageData !== lastProcessedImageRef.current) {
+                        lastProcessedImageRef.current = data.imageData;
                         processImage(data.imageData, data.calibrationData);
+                    }
+                    if (data.settings && typeof data.settings.autoCopy === 'boolean') {
+                        // Only update if different to avoid loop/flicker?
+                        // Actually, if remote changed, we should accept it.
+                        // But if we just toggled it locally, we don't want to revert before server confirms?
+                        // We rely on 'lastUpdated' to only process NEW changes.
+                        // But polling happens every 2s.
+                        // If we check `autoCopy !== data.settings.autoCopy`, then update.
+                        // We use `updateAutoCopy(val, false)` to NOT push back to server (prevent loop).
+                        if (autoCopy !== data.settings.autoCopy) {
+                            updateAutoCopy(data.settings.autoCopy, false);
+                        }
                     }
                 }
             } catch (e) {
@@ -205,6 +251,9 @@ export default function HostPage() {
 
             if (apiData.latex) {
                 addToHistory(apiData.latex, dataUrl);
+                if (autoCopy) {
+                    navigator.clipboard.writeText(apiData.latex).catch(e => console.error("Auto Copy Failed", e));
+                }
             } else if (apiData.error) {
                 setErrorMsg(`Error: ${apiData.error}`);
             }
@@ -438,6 +487,15 @@ export default function HostPage() {
                         >
                             {showQrPanel ? <Maximize2 size={18} className="rotate-90" /> : <Maximize2 size={18} className="-rotate-90" />} {/* Using icon to signify expand/collapse */}
                         </button>
+
+                        <button
+                            onClick={() => setShowSettings(true)}
+                            className="p-2 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 text-slate-500 hover:text-slate-700 transition-all shadow-sm"
+                            title={t("header.settings")}
+                        >
+                            <Settings size={18} />
+                        </button>
+
                         <h2 className="text-xl font-bold text-slate-700">{t("host.history_title")}</h2>
                     </div>
                     {processing && (
@@ -497,6 +555,13 @@ export default function HostPage() {
                     )}
                 </div>
             </div>
+            {showSettings && (
+                <SettingsModal
+                    onClose={() => setShowSettings(false)}
+                    autoCopy={autoCopy}
+                    onToggleAutoCopy={() => updateAutoCopy(!autoCopy)}
+                />
+            )}
         </main>
     );
 }

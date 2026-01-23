@@ -5,7 +5,6 @@ import Canvas from "@/components/Canvas";
 import { Toolbar } from "@/components/Toolbar";
 import { Send, Check, Settings } from "lucide-react";
 import { ClientSettingsModal } from "@/components/ClientSettingsModal";
-import { CalibrationModal } from "@/components/CalibrationModal";
 
 import { ErrorPopup } from "@/components/ErrorPopup";
 
@@ -34,11 +33,13 @@ export default function ClientPage({ params }: { params: Promise<{ sessionId: st
     const [palmRejection, setPalmRejection] = useState(false);
     // Settings Modal
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-    // Calibration Modal
-    const [isCalibrationOpen, setIsCalibrationOpen] = useState(false);
 
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const [canvasKey, setCanvasKey] = useState(0);
+
+    // Sync: Auto Copy State
+    const [autoCopy, setAutoCopy] = useState(false);
+    const [lastSyncTime, setLastSyncTime] = useState(0);
 
     // Orientation detection
     const [isLandscape, setIsLandscape] = useState(false);
@@ -61,6 +62,44 @@ export default function ClientPage({ params }: { params: Promise<{ sessionId: st
         return () => { document.body.style.overscrollBehavior = ""; };
     }, []);
 
+    // Sync Poll
+    React.useEffect(() => {
+        const pollSettings = async () => {
+            try {
+                const res = await fetch(`/api/sync?sessionId=${sessionId}`);
+                const data = await res.json();
+                if (data.settings && typeof data.settings.autoCopy === 'boolean') {
+                    if (data.lastUpdated && data.lastUpdated > lastSyncTime) {
+                        setAutoCopy(data.settings.autoCopy);
+                        setLastSyncTime(data.lastUpdated);
+                    }
+                }
+            } catch (e) {
+                // ignore
+            }
+        };
+
+        const interval = setInterval(pollSettings, 3000);
+        return () => clearInterval(interval);
+    }, [sessionId, lastSyncTime]);
+
+    const toggleAutoCopy = async () => {
+        const newVal = !autoCopy;
+        setAutoCopy(newVal); // Optimistic
+
+        try {
+            await fetch(`/api/sync?action=update_settings&sessionId=${sessionId}`, {
+                method: "POST",
+                body: JSON.stringify({ settings: { autoCopy: newVal } })
+            });
+            setLastSyncTime(Date.now()); // Avoid overwrite by poll
+        } catch (e) {
+            console.error(e);
+            // Revert?
+            setAutoCopy(!newVal);
+        }
+    };
+
     const handleClear = () => {
         if (confirm(t("client.confirm_clear"))) {
             setCanvasKey((prev) => prev + 1);
@@ -76,7 +115,7 @@ export default function ClientPage({ params }: { params: Promise<{ sessionId: st
         try {
             // Use custom exportImage to ensure white background
             // @ts-ignore - Canvas triggers imperative handle with exportImage
-            const blob = await canvasRef.current.exportImage('image/png');
+            const blob = await canvasRef.current.exportImage('image/jpeg', 0.8);
 
             if (!blob) throw new Error(t("client.error_empty"));
 
@@ -123,7 +162,7 @@ export default function ClientPage({ params }: { params: Promise<{ sessionId: st
 
     return (
         // Revert to fixed screen height (no scroll margin)
-        <main className="relative w-full h-[100dvh] bg-[#f9f9f9] overscroll-none overflow-hidden touch-none select-none">
+        <main className="relative w-full h-[100dvh] bg-[#f9f9f9] overscroll-none overflow-hidden touch-none select-none [-webkit-touch-callout:none] [-webkit-user-select:none]">
             <ErrorPopup message={errorMsg} onClose={() => setErrorMsg(null)} />
 
             <ClientSettingsModal
@@ -131,20 +170,11 @@ export default function ClientPage({ params }: { params: Promise<{ sessionId: st
                 onClose={() => setIsSettingsOpen(false)}
                 palmRejection={palmRejection}
                 onTogglePalmRejection={() => setPalmRejection(!palmRejection)}
-                onOpenCalibration={() => {
-                    setIsSettingsOpen(false);
-                    setIsCalibrationOpen(true);
-                }}
+                autoCopy={autoCopy}
+                onToggleAutoCopy={toggleAutoCopy}
             />
 
-            {isCalibrationOpen && (
-                <CalibrationModal
-                    onClose={() => setIsCalibrationOpen(false)}
-                    onSave={() => {
-                        // Optional: maybe show toast on client? Modal handles toast itself.
-                    }}
-                />
-            )}
+
 
             {/* Canvas Layer - Full Screen */}
             <div className="absolute inset-0 z-0 bg-[#f9f9f9]">

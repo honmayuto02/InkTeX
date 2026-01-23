@@ -48,7 +48,8 @@ const Canvas = React.forwardRef<HTMLCanvasElement, CanvasProps>(({
     const transformRef = useRef({ x: 0, y: 0, k: 1 });
 
     // Active Pointers for Multitouch
-    const pointersRef = useRef<Map<number, { x: number, y: number }>>(new Map());
+    const pointersRef = useRef<Map<number, { x: number, y: number, type: string }>>(new Map());
+    const activeDrawingPointerId = useRef<number | null>(null);
 
     // Check if we are panning (2 fingers)
     const isPanning = useRef(false);
@@ -234,7 +235,7 @@ const Canvas = React.forwardRef<HTMLCanvasElement, CanvasProps>(({
             setRedoStack([]);
         },
         // Enhanced export with white background for AI
-        exportImage: (type: string = 'image/png') => {
+        exportImage: (type: string = 'image/png', quality?: number) => {
             const canvas = canvasRef.current;
             if (!canvas) return null;
 
@@ -288,18 +289,25 @@ const Canvas = React.forwardRef<HTMLCanvasElement, CanvasProps>(({
             if (width <= 0 || height <= 0) return null;
 
             // 3. Create Cropped Canvas
+            const MAX_DIMENSION = 1024;
+            let scale = 1;
+            if (width > MAX_DIMENSION || height > MAX_DIMENSION) {
+                scale = Math.min(MAX_DIMENSION / width, MAX_DIMENSION / height);
+            }
+
             const tempCanvas = document.createElement('canvas');
-            tempCanvas.width = width;
-            tempCanvas.height = height;
+            tempCanvas.width = width * scale;
+            tempCanvas.height = height * scale;
             const tCtx = tempCanvas.getContext('2d');
             if (!tCtx) return null;
 
             // Fill white (for AI legibility)
             tCtx.fillStyle = '#FFFFFF';
-            tCtx.fillRect(0, 0, width, height);
+            tCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
 
             // Draw strokes manually relative to crop rect (World Space -> Crop Space)
-            // Translate context to shift everything by -minX, -minY
+            // Transform: Scale -> Translate
+            tCtx.scale(scale, scale);
             tCtx.translate(-minX, -minY);
 
             strokes.forEach((s) => {
@@ -310,7 +318,7 @@ const Canvas = React.forwardRef<HTMLCanvasElement, CanvasProps>(({
                 drawStroke(tCtx, currentPoints, color, size, tool === "eraser");
             }
 
-            return new Promise<Blob | null>((resolve) => tempCanvas.toBlob(resolve, type));
+            return new Promise<Blob | null>((resolve) => tempCanvas.toBlob(resolve, type, quality));
         },
         toBlob: (callback: BlobCallback, type?: string, quality?: any) => canvasRef.current?.toBlob(callback, type, quality),
         toDataURL: (type?: string, quality?: any) => canvasRef.current?.toDataURL(type, quality) || "",
@@ -321,14 +329,24 @@ const Canvas = React.forwardRef<HTMLCanvasElement, CanvasProps>(({
         e.currentTarget.setPointerCapture(e.pointerId);
 
         // Track pointer
-        pointersRef.current.set(e.pointerId, { x: e.nativeEvent.offsetX, y: e.nativeEvent.offsetY });
+        pointersRef.current.set(e.pointerId, { x: e.nativeEvent.offsetX, y: e.nativeEvent.offsetY, type: e.pointerType });
 
-        // Check Gesture Start (2 fingers)
-        if (pointersRef.current.size === 2) {
+        // Fix: If one of the pointers is a PEN, we should NOT interpret this as a pan gesture.
+        // Pen should always take precedence for drawing.
+        const pointers = Array.from(pointersRef.current.values());
+        const hasPen = pointers.some(p => p.type === 'pen');
+
+        // FORCE disable panning if Pen is present. Priority to drawing.
+        if (hasPen) {
+            isPanning.current = false;
+        }
+
+        if (pointersRef.current.size >= 2 && !hasPen) {
             isPanning.current = true;
             setIsDrawing(false);
             setCurrentPoints([]);
             currentPointsRef.current = [];
+            activeDrawingPointerId.current = null;
             return;
         }
 
@@ -341,6 +359,7 @@ const Canvas = React.forwardRef<HTMLCanvasElement, CanvasProps>(({
 
         // Start Drawing
         setIsDrawing(true);
+        activeDrawingPointerId.current = e.pointerId;
         setRedoStack([]);
 
         const worldPos = toWorld(e.nativeEvent.offsetX, e.nativeEvent.offsetY);
@@ -355,9 +374,9 @@ const Canvas = React.forwardRef<HTMLCanvasElement, CanvasProps>(({
 
     const handlePointerMove = (e: React.PointerEvent) => {
         const prevPointers = new Map(pointersRef.current);
-        pointersRef.current.set(e.pointerId, { x: e.nativeEvent.offsetX, y: e.nativeEvent.offsetY });
+        pointersRef.current.set(e.pointerId, { x: e.nativeEvent.offsetX, y: e.nativeEvent.offsetY, type: e.pointerType });
 
-        if (isPanning.current && pointersRef.current.size === 2) {
+        if (isPanning.current && pointersRef.current.size >= 2) {
             const keys = Array.from(pointersRef.current.keys());
             const p1Val = pointersRef.current.get(keys[0])!;
             const p2Val = pointersRef.current.get(keys[1])!;
@@ -411,13 +430,16 @@ const Canvas = React.forwardRef<HTMLCanvasElement, CanvasProps>(({
             return;
         }
 
-        if (isDrawing) {
+        if (isDrawing && e.pointerId === activeDrawingPointerId.current) {
             const worldPos = toWorld(e.nativeEvent.offsetX, e.nativeEvent.offsetY);
             const point = [worldPos.x, worldPos.y, e.pressure];
             currentPointsRef.current.push(point);
             cursorPosRef.current = [e.nativeEvent.offsetX, e.nativeEvent.offsetY];
         } else {
-            cursorPosRef.current = [e.nativeEvent.offsetX, e.nativeEvent.offsetY];
+            // Update cursor position only if it's the active pointer or we are not drawing
+            if (!isDrawing || e.pointerId === activeDrawingPointerId.current) {
+                cursorPosRef.current = [e.nativeEvent.offsetX, e.nativeEvent.offsetY];
+            }
         }
         requestAnimationFrame(renderLoop);
     };
@@ -434,7 +456,14 @@ const Canvas = React.forwardRef<HTMLCanvasElement, CanvasProps>(({
             return;
         }
 
+        // Only finish stroke if the ACTIVE drawing pointer is lifted
+        if (e.pointerId !== activeDrawingPointerId.current) {
+            e.currentTarget.releasePointerCapture(e.pointerId);
+            return;
+        }
+
         setIsDrawing(false);
+        activeDrawingPointerId.current = null;
         e.currentTarget.releasePointerCapture(e.pointerId);
 
         // Finalize stroke

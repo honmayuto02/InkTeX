@@ -16,6 +16,9 @@ export interface SessionData {
     lastUpdated: number;
     imageData?: string; // Base64
     calibrationData?: string; // Data URL of calibration image from client
+    settings?: {
+        autoCopy?: boolean;
+    };
 }
 
 const memoryStore = global._inkTexStore;

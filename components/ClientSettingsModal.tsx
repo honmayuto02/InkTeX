@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { X, Hand, Globe, Check, BookOpen } from "lucide-react";
+import { X, Hand, Globe, Check, Clipboard } from "lucide-react";
 import { useLanguage } from "./contexts/LanguageContext";
 import { clsx } from "clsx";
 
@@ -10,10 +10,11 @@ interface ClientSettingsModalProps {
     onClose: () => void;
     palmRejection: boolean;
     onTogglePalmRejection: () => void;
-    onOpenCalibration: () => void;
+    autoCopy: boolean;
+    onToggleAutoCopy: () => void;
 }
 
-export function ClientSettingsModal({ isOpen, onClose, palmRejection, onTogglePalmRejection, onOpenCalibration }: ClientSettingsModalProps) {
+export function ClientSettingsModal({ isOpen, onClose, palmRejection, onTogglePalmRejection, autoCopy, onToggleAutoCopy }: ClientSettingsModalProps) {
     const { lang, setLang, t } = useLanguage();
 
     if (!isOpen) return null;
@@ -65,21 +66,39 @@ export function ClientSettingsModal({ isOpen, onClose, palmRejection, onTogglePa
                         </button>
                     </div>
 
-                    {/* Calibration (New) */}
+
+
+                    {/* Auto Copy (Synced) */}
                     <div>
                         <div className="flex items-center gap-2 mb-3 text-slate-600 font-bold">
-                            <BookOpen size={18} />
-                            <span>{t("cal.title")}</span>
+                            <Clipboard size={18} />
+                            <span>{t("settings.auto_copy")}</span>
                         </div>
                         <button
-                            onClick={onOpenCalibration}
-                            className="w-full flex items-center justify-between p-4 rounded-xl border-2 bg-white border-slate-200 hover:border-blue-300 hover:text-blue-600 text-slate-700 transition-all font-bold"
+                            onClick={onToggleAutoCopy}
+                            className={clsx(
+                                "w-full flex items-center justify-between p-4 rounded-xl border-2 transition-all",
+                                autoCopy
+                                    ? "bg-blue-50 border-blue-500/30 text-blue-700"
+                                    : "bg-white border-slate-200 hover:border-slate-300 text-slate-700"
+                            )}
                         >
-                            <span>{t("cal.desc")}</span>
-                            <BookOpen size={20} />
+                            <span className="font-bold">
+                                {autoCopy ? "ON" : "OFF"}
+                            </span>
+                            <div className={clsx(
+                                "w-12 h-7 rounded-full relative transition-colors shadow-inner",
+                                autoCopy ? "bg-blue-600" : "bg-slate-200"
+                            )}>
+                                <div className={clsx(
+                                    "absolute top-1 w-5 h-5 bg-white rounded-full transition-all shadow-sm",
+                                    autoCopy ? "left-6" : "left-1"
+                                )} />
+                            </div>
                         </button>
                     </div>
 
+                    {/* Language synchronized? Maybe. For now just local language. */}
                     {/* Language */}
                     <div>
                         <div className="flex items-center gap-2 mb-3 text-slate-600 font-bold">
