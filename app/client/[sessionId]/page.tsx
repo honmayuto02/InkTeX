@@ -5,6 +5,7 @@ import Canvas from "@/components/Canvas";
 import { Toolbar } from "@/components/Toolbar";
 import { Send, Check, Settings } from "lucide-react";
 import { ClientSettingsModal } from "@/components/ClientSettingsModal";
+import { InstallPrompt } from "@/components/InstallPrompt";
 
 import { ErrorPopup } from "@/components/ErrorPopup";
 
@@ -162,8 +163,9 @@ export default function ClientPage({ params }: { params: Promise<{ sessionId: st
 
     return (
         // Revert to fixed screen height (no scroll margin)
-        <main className="relative w-full h-[100dvh] bg-[#f9f9f9] overscroll-none overflow-hidden touch-none select-none [-webkit-touch-callout:none] [-webkit-user-select:none]">
+        <main className="fixed inset-0 w-screen h-[100dvh] bg-[#f9f9f9] overscroll-none overflow-hidden touch-none select-none [-webkit-touch-callout:none] [-webkit-user-select:none]">
             <ErrorPopup message={errorMsg} onClose={() => setErrorMsg(null)} />
+            <InstallPrompt />
 
             <ClientSettingsModal
                 isOpen={isSettingsOpen}

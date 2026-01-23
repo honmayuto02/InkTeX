@@ -330,7 +330,7 @@ export function CalibrationModal({ onClose, onSave }: CalibrationModalProps) {
 
                             <div className="bg-blue-50 border border-blue-100 rounded-lg p-2 md:p-3 text-center mb-1">
                                 <p className="text-xs md:text-sm font-bold text-blue-800">
-                                    👉 {t("cal.instruction_write")}
+                                    {t("cal.instruction_write")}
                                 </p>
                             </div>
 
@@ -366,10 +366,7 @@ export function CalibrationModal({ onClose, onSave }: CalibrationModalProps) {
                             {t("cal.area_label")}
                         </div>
 
-                        <div className="flex-1 relative" style={{
-                            backgroundImage: "radial-gradient(#cbd5e1 1px, transparent 1px)",
-                            backgroundSize: "24px 24px"
-                        }}>
+                        <div className="flex-1 relative">
                             <Canvas
                                 ref={canvasRef}
                                 tool={tool}

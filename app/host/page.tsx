@@ -9,6 +9,7 @@ import { SettingsModal } from "@/components/SettingsModal";
 import { ErrorPopup } from "@/components/ErrorPopup";
 
 import { useLanguage } from "@/components/contexts/LanguageContext";
+import { Tooltip } from "@/components/Tooltip";
 
 export default function HostPage() {
     const { t } = useLanguage();
@@ -349,8 +350,10 @@ export default function HostPage() {
                 `}
             >
                 <div className="absolute top-4 left-4">
-                    <a href="/" className="p-2 text-slate-400 hover:text-slate-600 transition-colors flex items-center gap-1">
-                        <span className="text-sm">{t("host.back")}</span>
+                    <a href="/" className="flex items-center gap-2 group p-2 rounded-lg hover:bg-slate-50 transition-all">
+                        <div className="rounded cursor-default text-slate-700 group-hover:text-blue-700 transition-colors">
+                            <span className="font-bold tracking-tight select-none text-2xl">InkTeX</span>
+                        </div>
                     </a>
                 </div>
 
@@ -480,21 +483,23 @@ export default function HostPage() {
                 <div className="flex items-center justify-between mb-6">
                     <div className="flex items-center gap-4">
                         {/* Toggle Button */}
-                        <button
-                            onClick={() => setShowQrPanel(!showQrPanel)}
-                            className="p-2 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 text-slate-500 hover:text-slate-700 transition-all shadow-sm"
-                            title={showQrPanel ? t("host.panel_collapse") : t("host.panel_expand")}
-                        >
-                            {showQrPanel ? <Maximize2 size={18} className="rotate-90" /> : <Maximize2 size={18} className="-rotate-90" />} {/* Using icon to signify expand/collapse */}
-                        </button>
+                        <Tooltip text={showQrPanel ? t("host.panel_collapse") : t("host.panel_expand")} placement="bottom-start">
+                            <button
+                                onClick={() => setShowQrPanel(!showQrPanel)}
+                                className="p-2 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 text-slate-500 hover:text-slate-700 transition-all shadow-sm"
+                            >
+                                {showQrPanel ? <Maximize2 size={18} className="rotate-90" /> : <Maximize2 size={18} className="-rotate-90" />} {/* Using icon to signify expand/collapse */}
+                            </button>
+                        </Tooltip>
 
-                        <button
-                            onClick={() => setShowSettings(true)}
-                            className="p-2 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 text-slate-500 hover:text-slate-700 transition-all shadow-sm"
-                            title={t("header.settings")}
-                        >
-                            <Settings size={18} />
-                        </button>
+                        <Tooltip text={t("header.settings")}>
+                            <button
+                                onClick={() => setShowSettings(true)}
+                                className="p-2 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 text-slate-500 hover:text-slate-700 transition-all shadow-sm"
+                            >
+                                <Settings size={18} />
+                            </button>
+                        </Tooltip>
 
                         <h2 className="text-xl font-bold text-slate-700">{t("host.history_title")}</h2>
                     </div>

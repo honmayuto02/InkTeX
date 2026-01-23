@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "InkTeX - 手書き数式をAIで即座にLaTeX変換",
   description: "タブレットやマウスで手書きした数式を、Google Gemini AIが高精度でLaTeXコードに変換します。Overleafなどの論文執筆を効率化。インストール不要、ブラウザですぐに使えます。",
-  keywords: ["TeX", "LaTeX", "手書き", "数学", "数式変換", "AI", "読み取り", "変換",  "テフ", "Overleaf", "InkTeX", "inktex", "無料"],
+  keywords: ["TeX", "LaTeX", "手書き", "数学", "数式変換", "AI", "読み取り", "変換", "テフ", "Overleaf", "InkTeX", "inktex", "無料"],
   openGraph: {
     title: "InkTeX - 手書き数式をAIで即座にLaTeX変換",
     description: "タブレットやマウスで手書きした数式を、Google Gemini AIが高精度でLaTeXコードに変換します。",
@@ -23,6 +23,19 @@ export const metadata: Metadata = {
   },
   verification: {
     google: "PnqJIKgrLjaJWdQwMmXU0SRG-fJMWfDUafzW5DxwgBs",
+  },
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "InkTeX",
+  },
+  viewport: {
+    width: "device-width",
+    initialScale: 1,
+    maximumScale: 1,
+    userScalable: false,
+    viewportFit: "cover",
   },
 };
 

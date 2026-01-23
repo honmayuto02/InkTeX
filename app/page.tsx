@@ -12,6 +12,7 @@ import { HelpModal } from "@/components/HelpModal";
 import { useLanguage } from "@/components/contexts/LanguageContext";
 import { clsx } from "clsx";
 import { useRouter } from "next/navigation";
+import { Tooltip } from "@/components/Tooltip";
 
 export default function Home() {
   const { t, lang, setLang } = useLanguage();
@@ -42,7 +43,26 @@ export default function Home() {
     if (saved) {
       setAutoCopy(saved === "true");
     }
+    if (saved) {
+      setAutoCopy(saved === "true");
+    }
   }, []);
+
+  const [palmRejection, setPalmRejection] = useState(false);
+
+  // Load Palm Rejection setting
+  React.useEffect(() => {
+    const saved = localStorage.getItem("inktex_palm_rejection");
+    if (saved) {
+      setPalmRejection(saved === "true");
+    }
+  }, []);
+
+  const togglePalmRejection = () => {
+    const newVal = !palmRejection;
+    setPalmRejection(newVal);
+    localStorage.setItem("inktex_palm_rejection", String(newVal));
+  };
 
   const toggleAutoCopy = () => {
     const newVal = !autoCopy;
@@ -187,8 +207,8 @@ export default function Home() {
       <header className="flex-none bg-[#28426d] text-white px-4 h-14 flex items-center justify-between z-50 sticky top-0 shadow-md">
         {/* Left: Branding & Back (Simulated) */}
         <div className="flex items-center gap-4">
-          <div className="p-1.5 bg-white/10 rounded cursor-default">
-            <span className="font-bold tracking-tight select-none">InkTeX</span>
+          <div className="rounded cursor-default">
+            <span className="font-bold tracking-tight select-none text-2xl">InkTeX</span>
           </div>
           {/* Divider */}
           <div className="h-6 w-px bg-white/20 mx-2" />
@@ -203,29 +223,30 @@ export default function Home() {
             <button
               onClick={() => router.push("/host")}
               className="p-2 hover:bg-white/10 rounded-full text-white/90 hover:text-white transition-all"
-              title={t("header.sync")}
             >
               <Smartphone size={20} />
             </button>
           </Tooltip>
 
           {/* New Calibration Button */}
-          <button
-            onClick={() => setShowCalibration(true)}
-            className="p-2 hover:bg-white/10 rounded-full text-white/90 hover:text-white transition-all flex items-center gap-2"
-            title={t("header.calibration")}
-          >
-            <PenTool size={20} />
-          </button>
+          <Tooltip text={t("header.calibration")}>
+            <button
+              onClick={() => setShowCalibration(true)}
+              className="p-2 hover:bg-white/10 rounded-full text-white/90 hover:text-white transition-all flex items-center gap-2"
+            >
+              <PenTool size={20} />
+            </button>
+          </Tooltip>
 
           {/* Settings Button */}
-          <button
-            onClick={() => setShowSettings(true)}
-            className="p-2 hover:bg-white/10 rounded-full text-white/90 hover:text-white transition-all"
-            title={t("header.settings")}
-          >
-            <Settings size={20} />
-          </button>
+          <Tooltip text={t("header.settings")}>
+            <button
+              onClick={() => setShowSettings(true)}
+              className="p-2 hover:bg-white/10 rounded-full text-white/90 hover:text-white transition-all"
+            >
+              <Settings size={20} />
+            </button>
+          </Tooltip>
 
           {/* Shutdown Button Removed - Auto-shutdown implemented */}
         </div>
@@ -328,6 +349,8 @@ export default function Home() {
           onClose={() => setShowSettings(false)}
           autoCopy={autoCopy}
           onToggleAutoCopy={toggleAutoCopy}
+          palmRejection={palmRejection}
+          onTogglePalmRejection={togglePalmRejection}
         />
       )}
 
@@ -353,30 +376,4 @@ function FaqItem({ q, a }: { q: string, a: string }) {
   );
 }
 
-// Simple Tooltip Component (Copied for consistency, or should extract to shared)
-function Tooltip({ text, children }: { text: string, children: React.ReactNode }) {
-  const [isVisible, setIsVisible] = useState(false);
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  const handleMouseEnter = () => {
-    timeoutRef.current = setTimeout(() => setIsVisible(true), 1000); // 1s delay
-  };
-
-  const handleMouseLeave = () => {
-    if (timeoutRef.current) clearTimeout(timeoutRef.current);
-    setIsVisible(false);
-  };
-
-  return (
-    <div className="relative flex flex-col items-center" onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}>
-      {children}
-      {isVisible && (
-        <div className="absolute top-full mt-2 right-0 px-3 py-1.5 bg-slate-800 text-white text-xs rounded shadow-lg whitespace-nowrap z-[200] animate-in fade-in zoom-in-95 pointer-events-none">
-          {text}
-          {/* Arrow (Right aligned manually) */}
-          <div className="absolute -top-1 right-4 w-2 h-2 bg-slate-800 rotate-45" />
-        </div>
-      )}
-    </div>
-  );
-}
