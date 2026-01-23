@@ -112,7 +112,13 @@ export default function ClientPage({ params }: { params: Promise<{ sessionId: st
             />
 
             {/* Canvas Layer - Full Screen */}
-            <div className="absolute inset-0 z-0">
+            <div
+                className="absolute inset-0 z-0 bg-[#f9f9f9]"
+                style={{
+                    backgroundImage: "radial-gradient(#cbd5e1 1px, transparent 1px)",
+                    backgroundSize: "24px 24px"
+                }}
+            >
                 <Canvas
                     key={canvasKey}
                     ref={canvasRef}
@@ -120,6 +126,9 @@ export default function ClientPage({ params }: { params: Promise<{ sessionId: st
                     color="#000000"
                     size={size}
                     palmRejection={palmRejection}
+                    minZoom={0.5}
+                    maxZoom={3.0}
+                    panBounds={3000}
                 />
             </div>
 

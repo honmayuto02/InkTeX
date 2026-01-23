@@ -16,6 +16,9 @@ interface CanvasProps {
     size: number;
     onExport?: (blob: Blob | null) => void;
     palmRejection?: boolean;
+    minZoom?: number;
+    maxZoom?: number;
+    panBounds?: number;
 }
 
 const Canvas = React.forwardRef<HTMLCanvasElement, CanvasProps>(({
@@ -24,6 +27,9 @@ const Canvas = React.forwardRef<HTMLCanvasElement, CanvasProps>(({
     size,
     onExport,
     palmRejection = false,
+    minZoom = 0.5,
+    maxZoom = 3,
+    panBounds = 5000,
 }, ref) => {
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const [strokes, setStrokes] = useState<Stroke[]>([]);
@@ -346,12 +352,29 @@ const Canvas = React.forwardRef<HTMLCanvasElement, CanvasProps>(({
                 const focus = centerPrev;
                 let newK = prev.k * scaleFactor;
                 // Limit Zoom
-                if (newK < 0.1) newK = 0.1;
-                if (newK > 5) newK = 5;
+                // Limit Zoom
+                if (newK < minZoom) newK = minZoom;
+                if (newK > maxZoom) newK = maxZoom;
+
+                // Calculate proposed new position
+                let newX = focus.x - (focus.x - prev.x) * scaleFactor + dx;
+                let newY = focus.y - (focus.y - prev.y) * scaleFactor + dy;
+
+                // Simple Pan Clamping (prevent losing the canvas center)
+                // We assume the "content" is roughly around (0,0).
+                // Allow panning up to panBounds pixels away from center (scaled)
+                // This is a rough heuristic to prevent "lost in void"
+                // The visible area is roughly -newX/newK, -newY/newK.
+                // We just clamp the raw translation values.
+                const bound = panBounds * newK;
+                if (newX > bound) newX = bound;
+                if (newX < -bound) newX = -bound;
+                if (newY > bound) newY = bound;
+                if (newY < -bound) newY = -bound;
 
                 return {
-                    x: focus.x - (focus.x - prev.x) * scaleFactor + dx,
-                    y: focus.y - (focus.y - prev.y) * scaleFactor + dy,
+                    x: newX,
+                    y: newY,
                     k: newK
                 };
             });
