@@ -19,6 +19,10 @@ Context (Optional - if calibration image is present):
 [Image 2]: Input image to calculate
 `;
 
+// Set max duration to 60s (pro plan) or 10s (hobby).
+// Since we can't detect plan, we try to be efficient within 10s.
+export const maxDuration = 60; // Attempt to extend if possible
+
 export async function POST(req: NextRequest) {
     try {
         const apiKey = process.env.GEMINI_API_KEY;
@@ -76,19 +80,38 @@ export async function POST(req: NextRequest) {
         const genAI = new GoogleGenerativeAI(apiKey);
 
         // Model priority list for fallback
-        // 1. gemini-2.5-flash
-        // 2. gemini-2.5-flash-lite
-        // 3. gemini-2.5-pro
-        // 4. gemini-2.0-flash
-        const MODELS = ["gemini-2.5-flash", "gemini-2.5-flash-lite", "gemini-2.5-pro", "gemini-2.0-flash"];
+        // PRIORITIZE FLASH models for speed.
+        const MODELS = ["gemini-2.0-flash", "gemini-1.5-flash", "gemini-1.5-pro"];
 
         let lastError: any = null;
 
+        // Timeout helper
+        const generateWithTimeout = async (model: any, prompt: any, timeoutMs: number) => {
+            let timeoutHandle: NodeJS.Timeout;
+            const timeoutPromise = new Promise((_, reject) => {
+                timeoutHandle = setTimeout(() => reject(new Error("Model Timeout")), timeoutMs);
+            });
+            const apiPromise = model.generateContent(prompt).then((res: any) => {
+                clearTimeout(timeoutHandle);
+                return res;
+            });
+            return Promise.race([apiPromise, timeoutPromise]);
+        };
+
+        const startTime = Date.now();
+        const GLOBAL_TIMEOUT = 9000; // 9s safety margin (Vercel hobby is 10s)
+
         for (const modelName of MODELS) {
+            // Check global time budget
+            if (Date.now() - startTime > GLOBAL_TIMEOUT) break;
+
             try {
                 console.log(`Attempting with model: ${modelName}`);
                 const model = genAI.getGenerativeModel({ model: modelName });
-                const result = await model.generateContent(promptParts);
+
+                // Give each model a strict 3s budget to allow fallbacks within 10s
+                const result: any = await generateWithTimeout(model, promptParts, 3000);
+
                 const responseText = result.response.text();
 
                 // Clean up response

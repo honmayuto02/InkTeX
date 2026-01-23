@@ -209,11 +209,56 @@ export default function HostPage() {
         return res; // Return Raw Response
     };
 
+    // Helper: Compress/Resize Image
+    const compressImage = async (blob: Blob): Promise<Blob> => {
+        return new Promise((resolve, reject) => {
+            const img = new Image();
+            const url = URL.createObjectURL(blob);
+            img.onload = () => {
+                URL.revokeObjectURL(url);
+                const canvas = document.createElement("canvas");
+                let { width, height } = img;
+                const MAX_SIZE = 1024; // Limit max dimension
+
+                if (width > height) {
+                    if (width > MAX_SIZE) {
+                        height *= MAX_SIZE / width;
+                        width = MAX_SIZE;
+                    }
+                } else {
+                    if (height > MAX_SIZE) {
+                        width *= MAX_SIZE / height;
+                        height = MAX_SIZE;
+                    }
+                }
+
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext("2d");
+                if (!ctx) return reject("No canvas context");
+
+                // Draw white background mainly for transparency handling if needed, though usually opaque
+                ctx.fillStyle = "#ffffff";
+                ctx.fillRect(0, 0, width, height);
+                ctx.drawImage(img, 0, 0, width, height);
+
+                canvas.toBlob((b) => {
+                    if (b) resolve(b);
+                    else reject("Compression failed");
+                }, "image/jpeg", 0.8); // JPEG 80% quality
+            };
+            img.onerror = reject;
+            img.src = url;
+        });
+    };
+
     const processImage = async (dataUrl: string, clientCalibration?: string) => {
         setProcessing(true);
         try {
             const res = await fetch(dataUrl);
-            const blob = await res.blob();
+            const originalBlob = await res.blob();
+            // Compress
+            const blob = await compressImage(originalBlob);
 
             const formData = new FormData();
             formData.append("image", blob);
