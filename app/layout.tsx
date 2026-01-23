@@ -42,6 +42,7 @@ export const metadata: Metadata = {
 import { LanguageProvider } from "@/components/contexts/LanguageContext";
 
 import { HeartbeatManager } from "@/components/HeartbeatManager";
+import { Analytics } from "@vercel/analytics/next";
 
 export default function RootLayout({
   children,
@@ -57,6 +58,7 @@ export default function RootLayout({
           <HeartbeatManager />
           {children}
         </LanguageProvider>
+        <Analytics />
       </body>
     </html>
   );
