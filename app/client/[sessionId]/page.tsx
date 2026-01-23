@@ -85,7 +85,16 @@ export default function ClientPage({ params }: { params: Promise<{ sessionId: st
                 body: formData
             });
 
-            if (!res.ok) throw new Error(t("client.error_upload"));
+            if (!res.ok) {
+                const errData = await res.json().catch(() => ({}));
+                console.error("Upload error details:", res.status, errData);
+
+                if (res.status === 404) {
+                    throw new Error(t("client.error_session_expired") || "Session expired. Please start a new session.");
+                }
+
+                throw new Error(errData.error || t("client.error_upload"));
+            }
 
             // Success animation
             setSentSuccess(true);

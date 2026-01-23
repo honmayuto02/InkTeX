@@ -138,6 +138,7 @@ const translations: Dictionary = {
     "client.error_empty": { ja: "キャンバスが空です", en: "Canvas is empty" },
     "client.error_upload": { ja: "アップロードに失敗しました", en: "Upload failed" },
     "client.error_send": { ja: "送信に失敗しました", en: "Failed to send" },
+    "client.error_session_expired": { ja: "セッションが切れました。QRを読み直してください", en: "Session expired. Rescan QR." },
     "client.success_sent": { ja: "ホストに送信しました", en: "Sent to host!" },
 
     // Toolbar Help
