@@ -101,7 +101,7 @@ export default function ClientPage({ params }: { params: Promise<{ sessionId: st
 
     return (
         // Revert to fixed screen height (no scroll margin)
-        <main className="relative w-full h-[100dvh] bg-[#f9f9f9] overscroll-none overflow-hidden touch-none">
+        <main className="relative w-full h-[100dvh] bg-[#f9f9f9] overscroll-none overflow-hidden touch-none select-none">
             <ErrorPopup message={errorMsg} onClose={() => setErrorMsg(null)} />
 
             <ClientSettingsModal
