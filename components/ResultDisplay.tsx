@@ -61,7 +61,7 @@ export function ResultDisplay({ latex, onClose, onFeedback, variant = "floating"
         : "w-full bg-transparent relative flex flex-col h-full";
 
     return (
-        <div className={clsx(containerInfo, className)}>
+        <div className={clsx(containerInfo, className, "text-slate-900")}>
             {!compact && (
                 <div
                     className="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50 cursor-pointer hover:bg-slate-100 transition-colors"
