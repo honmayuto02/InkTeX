@@ -74,8 +74,8 @@ export async function POST(req: NextRequest) {
         promptParts.push("This is the input image (Image 2). Convert this to LaTeX.");
 
         const genAI = new GoogleGenerativeAI(apiKey);
-        // Use Gemin 2.5 Flash
-        const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+        // Use Gemin 2.5 Flash Lite
+        const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash-lite" });
 
         const result = await model.generateContent(promptParts);
 
