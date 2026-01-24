@@ -11,6 +11,7 @@ import { SettingsModal } from "@/components/SettingsModal";
 import { HelpModal } from "@/components/HelpModal";
 import { useLanguage } from "@/components/contexts/LanguageContext";
 import { clsx } from "clsx";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Tooltip } from "@/components/Tooltip";
 import { FeatureSection } from "@/components/FeatureSection";
@@ -342,11 +343,20 @@ export default function Home() {
             />
           </div>
 
-          <div className="text-center pt-8 text-sm text-slate-400">
-            {t("footer.copyright")}
-          </div>
         </div>
       </section>
+
+      {/* Footer with Links */}
+      <footer className="py-12 bg-slate-50 border-t border-slate-200 text-center">
+        <div className="flex justify-center gap-6 mb-8 text-sm font-medium text-slate-600">
+          <Link href="/privacy" className="hover:text-blue-600 transition-colors">プライバシーポリシー</Link>
+          <span className="text-slate-300">|</span>
+          <Link href="/contact" className="hover:text-blue-600 transition-colors">お問い合わせ</Link>
+        </div>
+        <div className="text-sm text-slate-400">
+          {t("footer.copyright")}
+        </div>
+      </footer>
 
       {/* Calibration Modal */}
       {showCalibration && (
