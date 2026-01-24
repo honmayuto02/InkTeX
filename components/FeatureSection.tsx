@@ -53,7 +53,7 @@ export function FeatureSection() {
                                 "flex-1 w-full flex justify-center",
                                 isEven ? "md:order-1" : "md:order-2"
                             )}>
-                                <div className="relative w-full max-w-[800px] aspect-[16/9] rounded-2xl overflow-hidden">
+                                <div className="relative w-full max-w-[1000px] aspect-[16/9] rounded-2xl overflow-hidden">
                                     {/* Placeholder Logic Removed as requested */}
                                     <Image
                                         src={feature.image}
