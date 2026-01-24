@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { QRCodeSVG } from "qrcode.react";
 import { ResultDisplay } from "@/components/ResultDisplay";
-import { Loader2, Maximize2, Minimize2, Settings, Smartphone } from "lucide-react";
+import { Loader2, Maximize2, Minimize2, Settings, Smartphone, ArrowLeft } from "lucide-react";
 import { SettingsModal } from "@/components/SettingsModal";
 
 import { ErrorPopup } from "@/components/ErrorPopup";
@@ -400,10 +400,9 @@ export default function HostPage() {
                 `}
             >
                 <div className="absolute top-4 left-4">
-                    <a href="/" className="flex items-center gap-2 group p-2 rounded-lg hover:bg-slate-50 transition-all">
-                        <div className="rounded cursor-default text-slate-700 group-hover:text-blue-700 transition-colors">
-                            <span className="font-bold tracking-tight select-none text-2xl">InkTeX</span>
-                        </div>
+                    <a href="/" className="flex items-center gap-2 group px-3 py-2 rounded-lg hover:bg-slate-100 transition-all text-slate-500 hover:text-slate-800">
+                        <ArrowLeft size={20} className="group-hover:-translate-x-1 transition-transform" />
+                        <span className="font-bold text-sm tracking-wide">{t("host.back")}</span>
                     </a>
                 </div>
 
@@ -434,36 +433,22 @@ export default function HostPage() {
                             <button onClick={() => startSession()} className="w-full py-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-600 font-bold hover:bg-slate-100 hover:text-slate-800 transition-colors">
                                 {t("host.new_session")}
                             </button>
-
-                            {/* Client Mode Button */}
-                            <button
-                                onClick={() => setIsManualEntry(true)}
-                                className="w-full py-3 mt-2 text-slate-400 font-medium text-sm hover:text-slate-600 transition-colors flex items-center justify-center gap-2"
-                            >
-                                <Smartphone size={16} />
-                                {t("host.client_mode_btn")}
-                            </button>
                         </div>
                     )}
 
-                    {/* Manual Client Entry Form */}
-                    {!sessionId && isManualEntry && (
+                    {/* Manual Client Entry Form (Overrides everything when active) */}
+                    {isManualEntry && (
                         <div className="mb-6 space-y-4">
-                            <div className="flex items-center gap-2 text-slate-600 mb-2">
-                                <button onClick={() => setIsManualEntry(false)} className="p-1 hover:bg-slate-100 rounded-full transition-colors">
-                                    <Minimize2 size={20} className="rotate-90" /> {/* Using rotate as back arrow proxy or just X */}
-                                </button>
-                                <h2 className="font-bold">{t("host.client_mode_title")}</h2>
-                            </div>
+                            <h2 className="font-bold text-lg text-slate-700 text-center">{t("host.client_mode_title")}</h2>
 
-                            <p className="text-xs text-slate-500">{t("host.client_mode_desc")}</p>
+                            <p className="text-xs text-slate-500 text-center">{t("host.client_mode_desc")}</p>
 
                             <input
                                 type="text"
                                 value={manualId}
                                 onChange={(e) => setManualId(e.target.value.toLowerCase())}
-                                placeholder="Session ID"
-                                className="w-full p-3 border border-slate-200 rounded-xl font-mono text-center tracking-widest focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                placeholder="session id"
+                                className="w-full p-3 border border-slate-200 rounded-xl font-mono text-center tracking-widest focus:outline-none focus:ring-2 focus:ring-blue-500 uppercase"
                             />
 
                             <button
@@ -477,10 +462,19 @@ export default function HostPage() {
                             >
                                 {t("host.connect_btn")}
                             </button>
+
+                            {/* Cancel Button (Moved to bottom) */}
+                            <button
+                                onClick={() => setIsManualEntry(false)}
+                                className="w-full py-2 text-sm font-bold text-slate-400 hover:text-slate-600 transition-colors"
+                            >
+                                {t("result.cancel")}
+                            </button>
                         </div>
                     )}
 
-                    {sessionId && (
+                    {/* Session Active View (QR) - Hidden if manual entry is active */}
+                    {sessionId && !isManualEntry && (
                         <div className="flex flex-col items-center">
                             {clientUrl ? (
                                 <div className="bg-white p-2 rounded-xl shadow-inner border border-slate-100 mb-4">
@@ -501,34 +495,27 @@ export default function HostPage() {
                         </div>
                     )}
 
-                    {/* Manual Entry Toggle (Show if NO session active) */}
-                    {!sessionId && !lastSessionId && (
+                    {/* Initial State (No Session, No History) */}
+                    {!sessionId && !lastSessionId && !isManualEntry && (
                         <div className="w-full">
-                            {/* Initial State: Only show "Connect manually" if needed? Or just show the input cleanly? 
-                                User complained about clutter. Let's make it a clean card too. 
-                             */}
                             <div className="flex flex-col items-center gap-4 py-8">
                                 <button onClick={() => startSession()} className="w-full py-4 bg-blue-600 text-white rounded-xl font-bold shadow-lg hover:bg-blue-700 transition-all flex items-center justify-center gap-2">
                                     <span>{t("host.new_session")}</span>
                                 </button>
-
-                                <div className="w-full flex items-center gap-2">
-                                    <input
-                                        type="text"
-                                        className="flex-1 bg-slate-50 border-none rounded-lg px-4 py-2 text-sm font-mono placeholder:text-slate-400 focus:ring-2 focus:ring-blue-100 transition-all"
-                                        placeholder="Session ID..."
-                                        value={manualId}
-                                        onChange={(e) => setManualId(e.target.value)}
-                                    />
-                                    <button
-                                        onClick={handleManual}
-                                        disabled={!manualId}
-                                        className="bg-slate-200 text-slate-600 px-4 py-2 rounded-lg text-sm font-bold hover:bg-slate-300 disabled:opacity-50 disabled:hover:bg-slate-200 transition-colors"
-                                    >
-                                        GO
-                                    </button>
-                                </div>
                             </div>
+                        </div>
+                    )}
+
+                    {/* ALWAYS VISIBLE Client Button (Unless in manual mode) */}
+                    {!isManualEntry && (
+                        <div className="mt-6 pt-6 border-t border-slate-100 w-full">
+                            <button
+                                onClick={() => setIsManualEntry(true)}
+                                className="w-full py-3 text-slate-500 font-medium text-sm hover:text-blue-600 hover:bg-slate-50 rounded-xl transition-all flex items-center justify-center gap-2"
+                            >
+                                <Smartphone size={18} />
+                                {t("host.client_mode_btn")}
+                            </button>
                         </div>
                     )}
                 </div>

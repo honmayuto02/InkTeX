@@ -117,7 +117,7 @@ const translations: Dictionary = {
     // Host Page
     "host.title": { ja: "デバイス連携", en: "Device Sync" },
     "host.scan_qr": { ja: "QRコードを読み取って接続", en: "Scan QR code to connect" },
-    "host.back": { ja: "← 戻る", en: "← Back" },
+    "host.back": { ja: "戻る", en: "Back" },
     "host.manual_ip_title": { ja: "接続できない場合", en: "Connection Issues?" },
     "host.manual_ip_prompt": { ja: "PCのIPアドレスを入力してください：", en: "Enter PC IP Address:" },
     "host.manual_wifi_msg": { ja: "同じWi-Fi/ネットワークに接続してください", en: "Ensure devices are on the same Wi-Fi" },
