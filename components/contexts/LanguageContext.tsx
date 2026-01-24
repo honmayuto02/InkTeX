@@ -138,6 +138,10 @@ const translations: Dictionary = {
     "host.resume_btn": { ja: "再開 ID:", en: "Resume ID:" },
     "host.manual_id": { ja: "IDを手入力", en: "Enter ID manually" },
     "host.new_session": { ja: "新しいセッションを開始", en: "Start New Session" },
+    "host.client_mode_btn": { ja: "この端末を入力デバイスとして使う", en: "Use as Input Device (Client)" },
+    "host.client_mode_title": { ja: "入力デバイスモード", en: "Input Device Mode" },
+    "host.client_mode_desc": { ja: "PCに表示されているセッションIDを入力してください", en: "Enter Session ID shown on PC" },
+    "host.connect_btn": { ja: "接続する", en: "Connect" },
 
     // Client Page
     "client.confirm_clear": { ja: "キャンバスを消去しますか？", en: "Clear canvas?" },
@@ -150,6 +154,19 @@ const translations: Dictionary = {
     // Toolbar Help
     "toolbar.help": { ja: "使い方", en: "Help" },
     "footer.copyright": { ja: "© 2026 InkTeX Project. Powered by Google Gemini.", en: "© 2026 InkTeX Project. Powered by Google Gemini." },
+
+    // Features
+    "feature.handwriting.title": { ja: "直感的な手書き入力", en: "Intuitive Handwriting Input" },
+    "feature.handwriting.desc": { ja: "マウスやペンで書くだけ。一瞬でLaTeXへ。複雑な数式コマンドを覚える必要はありません。キャンバスに手書きするだけで、AIが正確にLaTeXコードに変換します。", en: "Just write with your mouse or pen. Instantly convert to LaTeX. No need to memorize complex commands. AI accurately converts your drawing to code." },
+
+    "feature.mobile.title": { ja: "スマホ・タブレット連携モード", en: "Mobile & Tablet Sync" },
+    "feature.mobile.desc": { ja: "「書きづらい」を解消。スマホをペンタブ代わりに。マウスでの手書きが苦手ですか？QRコードでスマホやiPadと連携すれば、手元のタッチスクリーンで書いた数式が、PC画面にリアルタイムで同期されます。", en: "Turn your phone into a drawing tablet. Hate drawing with a mouse? Sync with your phone or iPad via QR code, and your handwriting appears on your PC screen in real-time." },
+
+    "feature.calibration.title": { ja: "AIによる筆跡キャリブレーション", en: "AI Handwriting Calibration" },
+    "feature.calibration.desc": { ja: "使えば使うほど、あなたのクセ字を理解する。キャリブレーション機能を使えば、AIがあなたの筆跡の特徴を学習。あなただけの専用モデルとして、認識精度が劇的に向上します。", en: "The more you use it, the better it gets. Use calibration to teach AI your unique handwriting style, drastically improving recognition accuracy." },
+
+    "feature.copy.title": { ja: "爆速の自動コピー機能", en: "Instant Auto-Copy" },
+    "feature.copy.desc": { ja: "変換完了と同時に、貼り付け準備OK。数式が変換された瞬間、クリップボードに自動でコピーされます。あとはOverleafやエディタに「貼り付け」するだけ。無駄なクリックをゼロに。", en: "Ready to paste instantly. Converted logic is automatically copied to your clipboard. Just paste into Overleaf or your editor. Zero wasted clicks." },
 };
 
 interface LanguageContextType {
@@ -192,7 +209,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     };
 
     return (
-        <LanguageContext.Provider value={{ lang, setLang, t }}>
+        <LanguageContext.Provider value={{ lang, setLang: updateLang, t }}>
             {children}
         </LanguageContext.Provider>
     );

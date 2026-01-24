@@ -13,6 +13,8 @@ import { useLanguage } from "@/components/contexts/LanguageContext";
 import { clsx } from "clsx";
 import { useRouter } from "next/navigation";
 import { Tooltip } from "@/components/Tooltip";
+import { FeatureSection } from "@/components/FeatureSection";
+import { Toast } from "@/components/Toast";
 
 export default function Home() {
   const { t, lang, setLang } = useLanguage();
@@ -28,6 +30,7 @@ export default function Home() {
   };
 
   const [isConverting, setIsConverting] = useState(false);
+  const [showToast, setShowToast] = useState<string | null>(null);
   const [latexResult, setLatexResult] = useState<string>("");
   const [showCalibration, setShowCalibration] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
@@ -158,7 +161,9 @@ export default function Home() {
       setLatexResult(data.latex || "No result");
 
       if (autoCopy && data.latex) {
-        navigator.clipboard.writeText(data.latex).catch(err => console.error("Auto Copy failed:", err));
+        navigator.clipboard.writeText(data.latex)
+          .then(() => setShowToast(t("result.copied")))
+          .catch(err => console.error("Auto Copy failed:", err));
       }
 
     } catch (error: any) {
@@ -202,6 +207,7 @@ export default function Home() {
   return (
     <main className="flex flex-col min-h-screen w-full bg-[#f9f9f9]">
       <ErrorPopup message={errorMsg} onClose={() => setErrorMsg(null)} />
+      {showToast && <Toast message={showToast} onClose={() => setShowToast(null)} />}
 
       {/* Header Bar (Fixed) */}
       <header className="flex-none bg-[#28426d] text-white px-4 h-14 flex items-center justify-between z-50 sticky top-0 shadow-md">
@@ -305,6 +311,9 @@ export default function Home() {
           )}
         </div>
       </div>
+
+      {/* Features Section */}
+      <FeatureSection />
 
       {/* FAQ / SEO Section */}
       <section className="bg-white border-t border-slate-200 py-16 px-4 md:px-8">

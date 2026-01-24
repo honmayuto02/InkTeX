@@ -81,7 +81,7 @@ export async function POST(req: NextRequest) {
 
         // Model priority list for fallback
         // PRIORITIZE FLASH models for speed.
-        const MODELS = ["gemini-2.0-flash", "gemini-1.5-flash", "gemini-1.5-pro"];
+        const MODELS = ["gemini-2.5-flash", "gemini-2.5-pro", "gemini-2.5-flash-lite"];
 
         let lastError: any = null;
 

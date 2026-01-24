@@ -3,10 +3,11 @@
 import React, { useEffect, useState } from "react";
 import { QRCodeSVG } from "qrcode.react";
 import { ResultDisplay } from "@/components/ResultDisplay";
-import { Loader2, Maximize2, Minimize2, Settings } from "lucide-react";
+import { Loader2, Maximize2, Minimize2, Settings, Smartphone } from "lucide-react";
 import { SettingsModal } from "@/components/SettingsModal";
 
 import { ErrorPopup } from "@/components/ErrorPopup";
+import { Toast } from "@/components/Toast";
 
 import { useLanguage } from "@/components/contexts/LanguageContext";
 import { Tooltip } from "@/components/Tooltip";
@@ -41,6 +42,7 @@ export default function HostPage() {
     const [isManualEntry, setIsManualEntry] = useState(false);
     const [showSettings, setShowSettings] = useState(false);
     const [autoCopy, setAutoCopy] = useState(false);
+    const [showToast, setShowToast] = useState<string | null>(null);
 
     // Sync AutoCopy with LocalStorage & Server
     const updateAutoCopy = async (val: boolean, pushToServer = true) => {
@@ -298,7 +300,9 @@ export default function HostPage() {
             if (apiData.latex) {
                 addToHistory(apiData.latex, dataUrl);
                 if (autoCopy) {
-                    navigator.clipboard.writeText(apiData.latex).catch(e => console.error("Auto Copy Failed", e));
+                    navigator.clipboard.writeText(apiData.latex)
+                        .then(() => setShowToast(t("result.copied")))
+                        .catch(e => console.error("Auto Copy Failed", e));
                 }
             } else if (apiData.error) {
                 setErrorMsg(`Error: ${apiData.error}`);
@@ -386,6 +390,7 @@ export default function HostPage() {
     return (
         <main className="flex min-h-screen bg-[#f9f9f9] overflow-hidden relative">
             <ErrorPopup message={errorMsg} onClose={() => setErrorMsg(null)} />
+            {showToast && <Toast message={showToast} onClose={() => setShowToast(null)} />}
 
             {/* Left Panel: Connection Info */}
             <div
@@ -409,7 +414,7 @@ export default function HostPage() {
 
                 <div className="p-6 bg-white rounded-2xl shadow-sm border border-slate-200 w-full max-w-[320px]">
                     {/* Resume / Manual Options */}
-                    {!sessionId && lastSessionId && (
+                    {!sessionId && lastSessionId && !isManualEntry && (
                         <div className="mb-6 space-y-3">
                             <div className="text-sm font-bold text-slate-500 uppercase tracking-wider">{t("host.resume_title")}</div>
 
@@ -428,6 +433,49 @@ export default function HostPage() {
 
                             <button onClick={() => startSession()} className="w-full py-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-600 font-bold hover:bg-slate-100 hover:text-slate-800 transition-colors">
                                 {t("host.new_session")}
+                            </button>
+
+                            {/* Client Mode Button */}
+                            <button
+                                onClick={() => setIsManualEntry(true)}
+                                className="w-full py-3 mt-2 text-slate-400 font-medium text-sm hover:text-slate-600 transition-colors flex items-center justify-center gap-2"
+                            >
+                                <Smartphone size={16} />
+                                {t("host.client_mode_btn")}
+                            </button>
+                        </div>
+                    )}
+
+                    {/* Manual Client Entry Form */}
+                    {!sessionId && isManualEntry && (
+                        <div className="mb-6 space-y-4">
+                            <div className="flex items-center gap-2 text-slate-600 mb-2">
+                                <button onClick={() => setIsManualEntry(false)} className="p-1 hover:bg-slate-100 rounded-full transition-colors">
+                                    <Minimize2 size={20} className="rotate-90" /> {/* Using rotate as back arrow proxy or just X */}
+                                </button>
+                                <h2 className="font-bold">{t("host.client_mode_title")}</h2>
+                            </div>
+
+                            <p className="text-xs text-slate-500">{t("host.client_mode_desc")}</p>
+
+                            <input
+                                type="text"
+                                value={manualId}
+                                onChange={(e) => setManualId(e.target.value.toLowerCase())}
+                                placeholder="Session ID"
+                                className="w-full p-3 border border-slate-200 rounded-xl font-mono text-center tracking-widest focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            />
+
+                            <button
+                                onClick={() => {
+                                    if (manualId.trim().length > 0) {
+                                        window.location.href = `/client/${manualId.trim()}`;
+                                    }
+                                }}
+                                disabled={manualId.length === 0}
+                                className="w-full py-3 bg-blue-600 text-white rounded-xl font-bold shadow-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                            >
+                                {t("host.connect_btn")}
                             </button>
                         </div>
                     )}
