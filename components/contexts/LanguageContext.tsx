@@ -161,18 +161,27 @@ interface LanguageContextType {
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
 
 export function LanguageProvider({ children }: { children: ReactNode }) {
-    const [lang, setLangState] = useState<Language>("ja");
+    const [lang, setLang] = useState<Language>("ja");
 
-    // Persist to localStorage
     React.useEffect(() => {
         const saved = localStorage.getItem("inktex_lang") as Language;
-        if (saved && (saved === "ja" || saved === "en")) {
-            setLangState(saved);
+        if (saved) {
+            setLang(saved);
+        } else {
+            // Auto-detect browser language
+            if (typeof navigator !== 'undefined') {
+                const browserLang = navigator.language.toLowerCase();
+                if (browserLang.startsWith("ja")) {
+                    setLang("ja");
+                } else {
+                    setLang("en");
+                }
+            }
         }
     }, []);
 
-    const setLang = (l: Language) => {
-        setLangState(l);
+    const updateLang = (l: Language) => {
+        setLang(l);
         localStorage.setItem("inktex_lang", l);
     };
 

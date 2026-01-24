@@ -276,30 +276,34 @@ export default function Home() {
       </div>
 
       {/* Main Content Area (Canvas) - Fixed height relative to viewport to ensure drawing feels app-like */}
-      <div
-        className="relative w-full h-[85vh] z-0 bg-[#f9f9f9] cursor-crosshair overflow-hidden touch-none"
-        style={{
-          touchAction: "none" // Prevents scrolling while drawing on touch devices
-        }}
-      >
-        <Canvas
-          key={canvasKey}
-          ref={canvasRef}
-          tool={tool}
-          color="#000000"
-          size={currentSize}
-        />
+      {/* Main Content Area (Canvas) - Fixed height relative to viewport to ensure drawing feels app-like */}
+      {/* Wrapper to allow touches on sides to scroll page on mobile */}
+      <div className="relative w-full h-[85vh] z-0 bg-[#f9f9f9] flex justify-center md:block py-2 md:py-0 px-2 md:px-0">
+        <div
+          className="relative w-full h-full max-w-[100%] md:max-w-none bg-white md:bg-[#f9f9f9] cursor-crosshair overflow-hidden touch-none rounded-xl md:rounded-none border border-slate-200 md:border-none shadow-sm md:shadow-none"
+          style={{
+            touchAction: "none" // Prevents scrolling while drawing on touch devices
+          }}
+        >
+          <Canvas
+            key={canvasKey}
+            ref={canvasRef}
+            tool={tool}
+            color="#000000"
+            size={currentSize}
+          />
 
-        {/* Result Display (Floating Overlay) */}
-        {latexResult && (
-          <div className="absolute bottom-8 right-8 z-10 pointer-events-auto max-w-2xl w-full px-4 md:px-0">
-            <ResultDisplay
-              latex={latexResult}
-              onClose={() => setLatexResult("")}
-              onFeedback={handleFeedback}
-            />
-          </div>
-        )}
+          {/* Result Display (Floating Overlay) */}
+          {latexResult && (
+            <div className="absolute bottom-8 right-8 z-10 pointer-events-auto max-w-2xl w-full px-4 md:px-0">
+              <ResultDisplay
+                latex={latexResult}
+                onClose={() => setLatexResult("")}
+                onFeedback={handleFeedback}
+              />
+            </div>
+          )}
+        </div>
       </div>
 
       {/* FAQ / SEO Section */}
