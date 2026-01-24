@@ -58,7 +58,7 @@ export function FeatureSection() {
                                 // Mobile: Always Image Top (Order 1), Text Bottom (Order 2) handled by flex-col default
                                 isEven ? "md:order-1" : "md:order-2"
                             )}>
-                                <div className="relative w-full max-w-[400px] aspect-[4/3] rounded-2xl shadow-xl overflow-hidden bg-white border border-slate-100 group hover:scale-[1.02] transition-transform duration-500">
+                                <div className="relative w-full max-w-[400px] aspect-[4/3] rounded-2xl overflow-hidden group hover:scale-[1.02] transition-transform duration-500">
                                     {/* Placeholder Logic: Usually we use next/image. 
                                         Since images don't exist yet, we show a nice fallback or try to load. 
                                         We'll use standard Image component but it will break if file missing.

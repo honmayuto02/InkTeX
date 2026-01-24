@@ -448,7 +448,7 @@ export default function HostPage() {
                                 value={manualId}
                                 onChange={(e) => setManualId(e.target.value.toLowerCase())}
                                 placeholder="session id"
-                                className="w-full p-3 border border-slate-200 rounded-xl font-mono text-center tracking-widest focus:outline-none focus:ring-2 focus:ring-blue-500 uppercase"
+                                className="w-full p-3 border border-slate-200 rounded-xl font-mono text-center tracking-widest focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900"
                             />
 
                             <button

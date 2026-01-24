@@ -211,7 +211,7 @@ export default function ClientPage({ params }: { params: Promise<{ sessionId: st
                 </div>
 
                 {/* Toolbar - Always Left Sidebar */}
-                <div className="fixed top-0 left-0 bottom-0 w-[4.5rem] border-r z-50 pointer-events-auto bg-white border-slate-200 shadow-sm transition-all duration-300 py-2 flex flex-col items-center">
+                <div className="fixed top-0 left-0 bottom-0 w-[4.5rem] border-r z-50 pointer-events-auto bg-white border-slate-200 shadow-sm transition-all duration-300 py-2 flex flex-col items-center overflow-y-auto">
                     <div className="h-full w-full">
                         <Toolbar
                             tool={tool}
