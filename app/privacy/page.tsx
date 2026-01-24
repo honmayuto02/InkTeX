@@ -63,9 +63,6 @@ export default function PrivacyPage() {
                                 広告配信事業者は、ユーザーの興味に応じた広告を表示するためにCookieを使用することがあります。
                                 Googleアドセンスに関する詳細は<a href="https://policies.google.com/technologies/ads?hl=ja" target="_blank" rel="nofollow noopener noreferrer" className="text-blue-600 hover:underline">「Googleポリシーと規約 - 広告」</a>をご覧ください。
                             </p>
-                            <p className="text-slate-600 leading-loose text-justify">
-                                また、当アプリは、Amazon.co.jpを宣伝しリンクすることによってサイトが紹介料を獲得できる手段を提供することを目的に設定されたアフィリエイトプログラムである、Amazonアソシエイト・プログラムの参加者です。
-                            </p>
                         </section>
 
                         <section>
