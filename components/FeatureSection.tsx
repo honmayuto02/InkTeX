@@ -53,18 +53,11 @@ export function FeatureSection() {
                                 "flex-1 w-full flex justify-center",
                                 isEven ? "md:order-1" : "md:order-2"
                             )}>
-                                <div className="relative w-full aspect-[16/9] rounded-2xl overflow-hidden shadow-sm border border-slate-100">
-                                    {/* Placeholder Logic Removed as requested */}
-                                    <Image
-                                        src={feature.image}
-                                        alt={t(feature.titleKey)}
-                                        fill
-                                        className="object-cover"
-                                        onError={(e) => {
-                                            (e.target as HTMLImageElement).style.opacity = "0.5";
-                                        }}
-                                    />
-                                </div>
+                                <img
+                                    src={feature.image}
+                                    alt={t(feature.titleKey)}
+                                    className="w-full h-auto object-contain"
+                                />
                             </div>
 
                             {/* Text Container */}
