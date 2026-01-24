@@ -44,22 +44,22 @@ export function FeatureSection() {
                 return (
                     <div
                         key={index}
-                        className="py-20 md:py-24 px-6 md:px-12 w-full bg-white"
+                        className="py-20 md:py-24 px-6 md:px-8 w-full bg-white"
                     >
-                        <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center gap-12 md:gap-20">
+                        <div className="max-w-full md:max-w-7xl mx-auto flex flex-col md:flex-row items-center gap-12 md:gap-24">
 
                             {/* Image Container */}
                             <div className={clsx(
                                 "flex-1 w-full flex justify-center",
                                 isEven ? "md:order-1" : "md:order-2"
                             )}>
-                                <div className="relative w-full max-w-[1000px] aspect-[16/9] rounded-2xl overflow-hidden">
+                                <div className="relative w-full aspect-[16/9] rounded-2xl overflow-hidden shadow-sm border border-slate-100">
                                     {/* Placeholder Logic Removed as requested */}
                                     <Image
                                         src={feature.image}
                                         alt={t(feature.titleKey)}
                                         fill
-                                        className="object-contain"
+                                        className="object-cover"
                                         onError={(e) => {
                                             (e.target as HTMLImageElement).style.opacity = "0.5";
                                         }}
