@@ -54,8 +54,7 @@ export function FeatureSection() {
                                 isEven ? "md:order-1" : "md:order-2"
                             )}>
                                 <div className="relative w-full max-w-[600px] aspect-[16/9] rounded-2xl overflow-hidden">
-                                    {/* Placeholder Logic */}
-                                    <div className="absolute inset-0 bg-slate-50" />
+                                    {/* Placeholder Logic Removed as requested */}
                                     <Image
                                         src={feature.image}
                                         alt={t(feature.titleKey)}
