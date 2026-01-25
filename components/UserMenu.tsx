@@ -148,16 +148,23 @@ export const UserMenu = ({ variant = "dark" }: UserMenuProps) => {
                         <div className="absolute right-0 top-full mt-2 w-64 bg-white rounded-xl shadow-xl border border-slate-100 overflow-hidden z-50 animate-in fade-in zoom-in-95 duration-200">
                             <div className="px-4 py-3 border-b border-slate-50 bg-slate-50/50">
                                 <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">{t("menu.account")}</p>
-                                <p className="text-sm text-slate-900 truncate font-medium mt-1">
+                                <p className="text-sm text-slate-900 truncate font-medium mt-1 mb-2">
                                     {user ? user.email : t("menu.guest")}
                                 </p>
 
                                 {/* Usage Meter Logic */}
                                 {user ? (
                                     <>
-                                        {tier === 'free' && usage !== null && <UsageMeter count={usage} limit={20} />}
+                                        {tier === 'free' && (
+                                            <>
+                                                <div className="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-slate-200 text-slate-600">
+                                                    FREE PLAN
+                                                </div>
+                                                {usage !== null && <UsageMeter count={usage} limit={20} />}
+                                            </>
+                                        )}
                                         {tier === 'pro' && (
-                                            <div className="mt-2 text-left">
+                                            <div className="text-left">
                                                 <div className="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-indigo-100 text-indigo-700">
                                                     PRO PLAN
                                                 </div>
