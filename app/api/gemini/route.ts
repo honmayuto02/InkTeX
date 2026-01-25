@@ -23,6 +23,7 @@ Context (Optional - if calibration image is present):
 // Since we can't detect plan, we try to be efficient within 10s.
 export const maxDuration = 60; // Attempt to extend if possible
 export const runtime = 'edge';
+export const preferredRegion = 'hnd1'; // Force execution in Tokyo
 
 export async function POST(req: NextRequest) {
     try {
@@ -46,15 +47,15 @@ export async function POST(req: NextRequest) {
             );
         }
 
-        // --- Usage Limit Check (Start) ---
+        // --- Auth & Usage Check (Start) ---
         const authHeader = req.headers.get('Authorization');
         let userId: string | null = null;
-        let isAdmin = false;
+        let isPro = false;
 
         if (authHeader) {
             try {
                 const token = authHeader.split(' ')[1];
-                const { createAdminClient, supabase } = await import("@/lib/supabase"); // Dynamic import to avoid circular dep if any (optional)
+                const { createAdminClient, supabase } = await import("@/lib/supabase");
 
                 // Validate user
                 const { data: { user }, error: authError } = await supabase.auth.getUser(token);
@@ -71,7 +72,7 @@ export async function POST(req: NextRequest) {
                         .single();
 
                     if (profile) {
-                        const isPro = profile.subscription_tier === 'pro';
+                        isPro = profile.subscription_tier === 'pro';
                         const usage = profile.usage_count || 0;
 
                         if (!isPro && usage >= 20) {
@@ -86,7 +87,7 @@ export async function POST(req: NextRequest) {
                 console.warn("Auth check failed:", e);
             }
         }
-        // --- Usage Limit Check (End) ---
+        // --- Auth & Usage Check (End) ---
 
         // Convert Blob to Base64 (Input)
         const buffer = Buffer.from(await image.arrayBuffer());
@@ -97,7 +98,6 @@ export async function POST(req: NextRequest) {
 
         // If calibration exists, add it first
         if (calibrationImage && calibrationImage instanceof Blob) {
-            // Log for debugging
             console.log("Using calibration image with label:", calibrationLabel);
             const calBuffer = Buffer.from(await calibrationImage.arrayBuffer());
             const calBase64 = calBuffer.toString("base64");
@@ -128,9 +128,18 @@ export async function POST(req: NextRequest) {
         // Fast: Flash -> Flash Lite -> Pro
         let MODELS = ["gemini-3-flash-preview", "gemini-2.5-flash", "gemini-2.5-flash-lite", "gemini-2.5-pro"];
 
+        // [Restriction] Block Pro-only models for free users
+        if (!isPro) {
+            // Remove gemini-3-flash-preview if not Pro
+            MODELS = MODELS.filter(m => m !== "gemini-3-flash-preview");
+        }
+
         // If precise mode, prioritize Pro
         if (speedPref === "precise") {
             MODELS = ["gemini-3-flash-preview", "gemini-2.5-pro", "gemini-2.5-flash"];
+            if (!isPro) {
+                MODELS = MODELS.filter(m => m !== "gemini-3-flash-preview");
+            }
         }
 
         let lastError: any = null;
@@ -143,13 +152,14 @@ export async function POST(req: NextRequest) {
             });
             const apiPromise = model.generateContent(prompt).then((res: any) => {
                 clearTimeout(timeoutHandle);
+                const responseText = res.response.text(); // Ensure text access works before resolving
                 return res;
             });
             return Promise.race([apiPromise, timeoutPromise]);
         };
 
         const startTime = Date.now();
-        const GLOBAL_TIMEOUT = 9000; // 9s safety margin (Vercel hobby is 10s)
+        const GLOBAL_TIMEOUT = 25000; // Edge allows up to 30s usually, keep safe margin
 
         for (const modelName of MODELS) {
             // Check global time budget
@@ -159,8 +169,8 @@ export async function POST(req: NextRequest) {
                 console.log(`Attempting with model: ${modelName}`);
                 const model = genAI.getGenerativeModel({ model: modelName });
 
-                // Give each model a strict 3s budget to allow fallbacks within 10s
-                const result: any = await generateWithTimeout(model, promptParts, 3000);
+                // [Updated] Timeout extended to 5000ms as requested
+                const result: any = await generateWithTimeout(model, promptParts, 5000);
 
                 const responseText = result.response.text();
 
@@ -170,7 +180,7 @@ export async function POST(req: NextRequest) {
 
                 // --- Increment Usage (Start) ---
                 let newUsageCount: number | undefined;
-                let isPro = false;
+                // isPro is already determined above
                 if (userId) {
                     try {
                         const { createAdminClient } = await import("@/lib/supabase");
@@ -178,18 +188,17 @@ export async function POST(req: NextRequest) {
                         const { error } = await admin.rpc('increment_usage', { user_id: userId });
 
                         if (error) {
-                            // Fallback if RPC doesn't exist (manual update)
+                            // Fallback
                             const { data: profile } = await admin.from('profiles').select('usage_count').eq('id', userId).single();
                             if (profile) {
                                 await admin.from('profiles').update({ usage_count: (profile.usage_count || 0) + 1 }).eq('id', userId);
                             }
                         }
 
-                        // Fetch updated count for response
+                        // Fetch updated count
                         const { data: updated } = await admin.from('profiles').select('usage_count, subscription_tier').eq('id', userId).single();
                         if (updated) {
                             newUsageCount = updated.usage_count;
-                            isPro = updated.subscription_tier === 'pro';
                         }
                     } catch (e) {
                         console.error("Failed to increment usage:", e);
