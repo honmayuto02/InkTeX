@@ -22,6 +22,7 @@ Context (Optional - if calibration image is present):
 // Set max duration to 60s (pro plan) or 10s (hobby).
 // Since we can't detect plan, we try to be efficient within 10s.
 export const maxDuration = 60; // Attempt to extend if possible
+export const runtime = 'edge';
 
 export async function POST(req: NextRequest) {
     try {
