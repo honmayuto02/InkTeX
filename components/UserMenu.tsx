@@ -61,12 +61,17 @@ export const UserMenu = ({ variant = "dark" }: UserMenuProps) => {
                 .select('usage_count, subscription_tier, cancel_at_period_end, current_period_end')
                 .eq('id', user.id)
                 .single()
-                .then(({ data }) => {
+                .then(({ data, error }) => {
                     if (data) {
-                        setUsage(data.usage_count);
+                        setUsage(data.usage_count ?? 0);
                         setTier(data.subscription_tier ? data.subscription_tier.toLowerCase() : 'free');
                         setCancelAtEnd(data.cancel_at_period_end);
                         setEndDate(data.current_period_end);
+                    } else {
+                        // Fallback if profile doesn't exist yet (latency in trigger or error)
+                        console.warn("Profile missing, defaulting to free:", error);
+                        setTier('free');
+                        setUsage(0);
                     }
                 });
         }
