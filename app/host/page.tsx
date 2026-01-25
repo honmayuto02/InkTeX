@@ -5,12 +5,15 @@ import { QRCodeSVG } from "qrcode.react";
 import { ResultDisplay } from "@/components/ResultDisplay";
 import { Loader2, Maximize2, Minimize2, Settings, Smartphone, ArrowLeft } from "lucide-react";
 import { SettingsModal } from "@/components/SettingsModal";
+import { UserMenu } from "@/components/UserMenu";
+import { LimitReachedModal } from "@/components/LimitReachedModal";
 
 import { ErrorPopup } from "@/components/ErrorPopup";
 import { Toast } from "@/components/Toast";
 
 import { useLanguage } from "@/components/contexts/LanguageContext";
 import { Tooltip } from "@/components/Tooltip";
+import { supabase } from "@/lib/supabase";
 
 export default function HostPage() {
     const { t } = useLanguage();
@@ -24,9 +27,13 @@ export default function HostPage() {
         imageData: string;
         timestamp: number;
         isPinned: boolean;
+        usageInfo?: {
+            label: string;
+            remaining: number;
+        };
     }
     const [history, setHistory] = useState<HistoryItem[]>([]);
-    const MAX_HISTORY = 10;
+    const MAX_HISTORY = 20;
 
     const [lastUpdated, setLastUpdated] = useState<number>(0);
     const [loading, setLoading] = useState(true);
@@ -43,6 +50,7 @@ export default function HostPage() {
     const [showSettings, setShowSettings] = useState(false);
     const [autoCopy, setAutoCopy] = useState(false);
     const [showToast, setShowToast] = useState<string | null>(null);
+    const [showLimitModal, setShowLimitModal] = useState(false);
 
     // Sync AutoCopy with LocalStorage & Server
     const updateAutoCopy = async (val: boolean, pushToServer = true) => {
@@ -200,7 +208,17 @@ export default function HostPage() {
 
     // Helper: Retry API Call
     const callGeminiWithRetry = async (formData: FormData, retries = 3, delay = 1000): Promise<any> => {
-        const res = await fetch("/api/gemini", { method: "POST", body: formData });
+        // Add Auth Header
+        const { data: { session } } = await supabase.auth.getSession();
+        const headers: HeadersInit = {};
+        if (session?.access_token) {
+            headers['Authorization'] = `Bearer ${session.access_token}`;
+        }
+
+        const res = await fetch("/api/gemini", { method: "POST", body: formData, headers });
+
+        if (res.status === 402) throw new Error("LIMIT_REACHED");
+
         if (res.status === 429) {
             if (retries > 0) {
                 await new Promise(r => setTimeout(r, delay));
@@ -298,7 +316,19 @@ export default function HostPage() {
             const apiData = await apiRes.json();
 
             if (apiData.latex) {
-                addToHistory(apiData.latex, dataUrl);
+                // Calculate usage info snapshot
+                let usageInfo;
+                if (typeof apiData.usage === 'number') {
+                    if (!apiData.isPro && apiData.usage <= 30) {
+                        usageInfo = {
+                            label: t("toast.usage"),
+                            remaining: Math.max(0, 30 - apiData.usage)
+                        };
+                    }
+                }
+
+                addToHistory(apiData.latex, dataUrl, usageInfo);
+
                 if (autoCopy) {
                     navigator.clipboard.writeText(apiData.latex)
                         .then(() => setShowToast(t("result.copied")))
@@ -311,6 +341,8 @@ export default function HostPage() {
             console.error("Conversion error", e);
             if (e.message === "Rate limit exceeded") {
                 setErrorMsg(t("err.rate_limit_msg"));
+            } else if (e.message === "LIMIT_REACHED") {
+                setShowLimitModal(true);
             } else {
                 setErrorMsg(t("err.unexpected"));
             }
@@ -319,14 +351,15 @@ export default function HostPage() {
         }
     };
 
-    const addToHistory = (latex: string, imageData: string) => {
+    const addToHistory = (latex: string, imageData: string, usageInfo?: { label: string, remaining: number }) => {
         setHistory(prev => {
             const newItem: HistoryItem = {
                 id: Math.random().toString(36).substr(2, 9),
                 latex,
                 imageData,
                 timestamp: Date.now(),
-                isPinned: false
+                isPinned: false,
+                usageInfo
             };
 
             let newHistory = [newItem, ...prev];
@@ -572,6 +605,17 @@ export default function HostPage() {
                             </button>
                         </Tooltip>
 
+                        <h2 className="text-xl font-bold text-slate-700">{t("host.history_title")}</h2>
+                    </div>
+
+                    <div className="flex items-center gap-3">
+                        {processing && (
+                            <div className="flex items-center gap-2 text-blue-600 text-sm bg-blue-50 px-3 py-1 rounded-full animate-pulse">
+                                <Loader2 size={14} className="animate-spin" />
+                                <span>{t("host.converting")}</span>
+                            </div>
+                        )}
+
                         <Tooltip text={t("header.settings")}>
                             <button
                                 onClick={() => setShowSettings(true)}
@@ -581,14 +625,8 @@ export default function HostPage() {
                             </button>
                         </Tooltip>
 
-                        <h2 className="text-xl font-bold text-slate-700">{t("host.history_title")}</h2>
+                        <UserMenu variant="light" />
                     </div>
-                    {processing && (
-                        <div className="flex items-center gap-2 text-blue-600 text-sm bg-blue-50 px-3 py-1 rounded-full animate-pulse">
-                            <Loader2 size={14} className="animate-spin" />
-                            <span>{t("host.converting")}</span>
-                        </div>
-                    )}
                 </div>
 
                 <div className="flex-1 overflow-y-auto pr-2 pb-20">
@@ -647,6 +685,7 @@ export default function HostPage() {
                     onToggleAutoCopy={() => updateAutoCopy(!autoCopy)}
                 />
             )}
+            {showLimitModal && <LimitReachedModal onClose={() => setShowLimitModal(false)} />}
         </main>
     );
 }

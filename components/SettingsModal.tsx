@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { X, Languages, Clipboard, Check, Hand } from "lucide-react";
+import { X, Languages, Clipboard, Check, Hand, Zap } from "lucide-react";
 import { useLanguage } from "./contexts/LanguageContext";
 import { clsx } from "clsx";
 
@@ -65,6 +65,8 @@ export function SettingsModal({ onClose, autoCopy, onToggleAutoCopy, palmRejecti
                             </button>
                         </div>
                     )}
+
+
 
                     {/* Auto Copy Setting */}
                     <div>

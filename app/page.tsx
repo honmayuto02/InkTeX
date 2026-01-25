@@ -8,7 +8,7 @@ import { ErrorPopup } from "@/components/ErrorPopup";
 import { Settings, Smartphone, PenTool } from "lucide-react";
 import { CalibrationModal } from "@/components/CalibrationModal";
 import { SettingsModal } from "@/components/SettingsModal";
-import { HelpModal } from "@/components/HelpModal";
+import { LimitReachedModal } from "@/components/LimitReachedModal";
 import { useLanguage } from "@/components/contexts/LanguageContext";
 import { clsx } from "clsx";
 import Link from "next/link";
@@ -16,6 +16,10 @@ import { useRouter } from "next/navigation";
 import { Tooltip } from "@/components/Tooltip";
 import { FeatureSection } from "@/components/FeatureSection";
 import { Toast } from "@/components/Toast";
+import { UpgradeButton } from "@/components/UpgradeButton";
+import { UserMenu } from "@/components/UserMenu";
+import { HelpModal } from "@/components/HelpModal";
+import { supabase } from "@/lib/supabase";
 
 export default function Home() {
   const { t, lang, setLang } = useLanguage();
@@ -33,26 +37,28 @@ export default function Home() {
   const [isConverting, setIsConverting] = useState(false);
   const [showToast, setShowToast] = useState<string | null>(null);
   const [latexResult, setLatexResult] = useState<string>("");
+  const [usageInfo, setUsageInfo] = useState<{ label: string, remaining: number } | null>(null);
   const [showCalibration, setShowCalibration] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  const [showLimitModal, setShowLimitModal] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [canvasKey, setCanvasKey] = useState(0);
   const [autoCopy, setAutoCopy] = useState(false);
 
-  // Load Auto Copy setting
+  // Load Settings
   React.useEffect(() => {
-    const saved = localStorage.getItem("inktex_autocopy");
-    if (saved) {
-      setAutoCopy(saved === "true");
-    }
-    if (saved) {
-      setAutoCopy(saved === "true");
-    }
+    const savedAutoCopy = localStorage.getItem("inktex_autocopy");
+    if (savedAutoCopy) setAutoCopy(savedAutoCopy === "true");
+
+
   }, []);
 
+
+
   const [palmRejection, setPalmRejection] = useState(false);
+  const [user, setUser] = useState<any>(null);
 
   // Load Palm Rejection setting
   React.useEffect(() => {
@@ -60,6 +66,10 @@ export default function Home() {
     if (saved) {
       setPalmRejection(saved === "true");
     }
+    // Check Session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+    });
   }, []);
 
   const togglePalmRejection = () => {
@@ -85,7 +95,16 @@ export default function Home() {
   // API Call with Retry Logic
   const callGeminiWithRetry = async (formData: FormData, retries = 3, delay = 1000): Promise<any> => {
     try {
-      const res = await fetch("/api/gemini", { method: "POST", body: formData });
+      // Add Auth Header
+      const { data: { session } } = await supabase.auth.getSession();
+      const headers: HeadersInit = {};
+      if (session?.access_token) {
+        headers['Authorization'] = `Bearer ${session.access_token}`;
+      }
+
+      const res = await fetch("/api/gemini", { method: "POST", body: formData, headers });
+
+      if (res.status === 402) throw new Error("LIMIT_REACHED");
 
       if (res.status === 429) {
         // Rate limit hit
@@ -116,6 +135,14 @@ export default function Home() {
     setErrorMsg(null);
 
     try {
+      // Guest Check
+      if (!user) {
+        const guestUsage = parseInt(localStorage.getItem("inktex_guest_usage") || "0", 10);
+        if (guestUsage >= 5) {
+          throw new Error("LIMIT_REACHED");
+        }
+      }
+
       // Use new exportImage method for better AI recognition (handling transparency)
       const canvas = canvasRef.current as any;
       let blob = null;
@@ -161,6 +188,28 @@ export default function Home() {
       const data = await callGeminiWithRetry(formData);
       setLatexResult(data.latex || "No result");
 
+      let nextUsageInfo = null;
+
+      // Increment Guest Usage
+      if (!user && data.latex) {
+        const current = parseInt(localStorage.getItem("inktex_guest_usage") || "0", 10);
+        const next = current + 1;
+        localStorage.setItem("inktex_guest_usage", String(next));
+        window.dispatchEvent(new Event("inktex_guest_usage_updated"));
+
+        const remaining = Math.max(0, 5 - next);
+        nextUsageInfo = { label: t("toast.guest"), remaining };
+      } else if (typeof data.usage === 'number') {
+        // Only show if NOT Pro and within limit
+        if (!data.isPro && data.usage <= 20) {
+          const remaining = Math.max(0, 20 - data.usage);
+          nextUsageInfo = { label: t("toast.usage"), remaining };
+        }
+      }
+
+      setUsageInfo(nextUsageInfo);
+
+      // Show Toast / Auto Copy
       if (autoCopy && data.latex) {
         navigator.clipboard.writeText(data.latex)
           .then(() => setShowToast(t("result.copied")))
@@ -172,6 +221,8 @@ export default function Home() {
       // Translate known errors
       if (error.message === "RATE_LIMIT") {
         setErrorMsg(t("err.rate_limit_msg"));
+      } else if (error.message === "LIMIT_REACHED") {
+        setShowLimitModal(true);
       } else {
         setErrorMsg(error.message || t("err.unexpected"));
       }
@@ -226,6 +277,10 @@ export default function Home() {
 
         {/* Right: Actions */}
         <div className="flex items-center gap-3">
+          <UpgradeButton />
+
+          <div className="h-6 w-px bg-white/20 mx-1 hidden md:block" />
+
           <Tooltip text={t("header.sync")}>
             <button
               onClick={() => router.push("/host")}
@@ -255,7 +310,9 @@ export default function Home() {
             </button>
           </Tooltip>
 
-          {/* Shutdown Button Removed - Auto-shutdown implemented */}
+          <div className="pl-2 border-l border-white/10 ml-1">
+            <UserMenu />
+          </div>
         </div>
       </header>
 
@@ -307,6 +364,7 @@ export default function Home() {
                 latex={latexResult}
                 onClose={() => setLatexResult("")}
                 onFeedback={handleFeedback}
+                usageInfo={usageInfo}
               />
             </div>
           )}
@@ -349,10 +407,15 @@ export default function Home() {
       {/* Footer with Links */}
       <footer className="py-12 bg-slate-50 border-t border-slate-200 text-center">
         <div className="flex justify-center gap-6 mb-8 text-sm font-medium text-slate-600">
-          <Link href="/privacy" className="hover:text-blue-600 transition-colors">プライバシーポリシー</Link>
+          <Link href="/privacy" className="hover:text-blue-600 transition-colors">{t("footer.privacy")}</Link>
           <span className="text-slate-300">|</span>
-          <Link href="/contact" className="hover:text-blue-600 transition-colors">お問い合わせ</Link>
+          <Link href="/contact" className="hover:text-blue-600 transition-colors">{t("footer.contact")}</Link>
         </div>
+
+        <div className="mb-8">
+          <UpgradeButton variant="large" />
+        </div>
+
         <div className="text-sm text-slate-400">
           {t("footer.copyright")}
         </div>
@@ -366,6 +429,11 @@ export default function Home() {
         />
       )}
 
+      {/* Limit Modal */}
+      {showLimitModal && (
+        <LimitReachedModal onClose={() => setShowLimitModal(false)} />
+      )}
+
       {/* Settings Modal */}
       {showSettings && (
         <SettingsModal
@@ -374,6 +442,7 @@ export default function Home() {
           onToggleAutoCopy={toggleAutoCopy}
           palmRejection={palmRejection}
           onTogglePalmRejection={togglePalmRejection}
+
         />
       )}
 

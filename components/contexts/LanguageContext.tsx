@@ -167,6 +167,71 @@ const translations: Dictionary = {
 
     "feature.copy.title": { ja: "爆速の自動コピー機能", en: "Instant Auto-Copy" },
     "feature.copy.desc": { ja: "変換完了と同時に、貼り付け準備OK。数式が変換された瞬間、クリップボードに自動でコピーされます。あとはOverleafやエディタに「貼り付け」するだけ。無駄なクリックをゼロに。", en: "Ready to paste instantly. Converted logic is automatically copied to your clipboard. Just paste into Overleaf or your editor. Zero wasted clicks." },
+
+    // Footer & Legal
+    "footer.privacy": { ja: "プライバシーポリシー", en: "Privacy Policy" },
+    "footer.contact": { ja: "お問い合わせ", en: "Contact" },
+
+    // Buttons
+    "btn.upgrade": { ja: "Proプランにアップグレード", en: "Upgrade to Pro" },
+    "btn.login": { ja: "ログイン", en: "Login" },
+    "btn.logout": { ja: "ログアウト", en: "Logout" },
+
+    // Pricing
+    "pricing.title": { ja: "あなたに最適なプランを選ぼう", en: "Choose Your Plan" },
+    "pricing.subtitle": { ja: "シンプルな料金体系。いつでもキャンセル可能です。", en: "Simple pricing. Cancel anytime." },
+    "pricing.top": { ja: "トップへ戻る", en: "Back to Home" },
+    "pricing.current": { ja: "現在のプラン", en: "Current Plan" },
+    "pricing.choose_monthly": { ja: "月額プランを選択", en: "Select Monthly" },
+    "pricing.choose_yearly": { ja: "年額プランを選択", en: "Select Yearly" },
+    "pricing.free.desc": { ja: "まずは試してみたい方に", en: "For those just starting out" },
+    "pricing.free.f1": { ja: "数式変換 (月20回まで)", en: "Math Conversions (20/mo)" },
+    "pricing.free.f2": { ja: "広告表示あり", en: "Ad Supported" },
+    "pricing.free.f3": { ja: "Gemini 2.5 モデル利用", en: "Gemini 2.5 Model" },
+    "pricing.free.f4": { ja: "基本の手書き入力", en: "Basic Handwriting" },
+    "pricing.pro.title": { ja: "Monthly", en: "Monthly" },
+    "pricing.pro.desc": { ja: "短期で利用したい方に", en: "Short-term usage" },
+    "pricing.pro.f1": { ja: "数式変換 (無制限)", en: "Unlimited Conversions" },
+    "pricing.pro.f2": { ja: "広告非表示", en: "Ad Free" },
+    "pricing.pro.f3": { ja: "Gemini 3 Flash モデル利用", en: "Gemini 3 Flash Model" },
+    "pricing.pro.f4": { ja: "優先サポート", en: "Priority Support" },
+    "pricing.year.title": { ja: "Yearly", en: "Yearly" },
+    "pricing.year.rec": { ja: "RECOMMENDED", en: "RECOMMENDED" },
+    "pricing.year.save": { ja: "2ヶ月分無料！", en: "2 Months Free!" },
+    "pricing.year.save_badge": { ja: "SAVE 22%", en: "SAVE 22%" },
+    "pricing.year.monthly": { ja: "月額換算 ¥248", en: "¥248 / month" },
+    "pricing.year.f1": { ja: "Pro機能すべて利用可能", en: "All Pro Features" },
+    "pricing.year.f2": { ja: "年間 ¥860 お得", en: "Save ¥860 / year" },
+    "pricing.year.f3": { ja: "長期利用に最適", en: "Best Value" },
+    "pricing.tax_note": { ja: "※ 価格は税込み表示です。", en: "* Prices include tax." },
+    "pricing.alert_dev": { ja: "登録画面へ進みます（準備中）", en: "Proceeding to checkout (Coming Soon)" },
+    "pricing.manage": { ja: "変更する", en: "Manage Subscription" },
+    "pricing.duration.month": { ja: "/月", en: "/mo" },
+    "pricing.duration.year": { ja: "/年", en: "/yr" },
+
+    // Limit Modal
+    "limit.title": { ja: "今月の無料枠を使い切りました", en: "Free Limit Reached" },
+    "limit.subtitle": { ja: "さらに利用するにはProプランへのアップグレードが必要です。", en: "Upgrade to Pro to continue using InkTeX." },
+    "limit.pro_title": { ja: "Proプランで無制限に", en: "Go Unlimited with Pro" },
+    "limit.pro_desc": { ja: "無制限の変換、高速なモデル、優先サポートを利用できます。", en: "Get unlimited conversions, faster AI models, and priority support." },
+
+    // Model Settings
+    "settings.model_speed": { ja: "変換速度", en: "Conversion Speed" },
+    "settings.speed_fast": { ja: "高速 (Flash)", en: "Fast (Flash)" },
+    "settings.speed_precise": { ja: "高精度 (Pro)", en: "Precise (Pro)" },
+
+    "host.manual_ip_placeholder": { ja: "例: 192.168.1.5", en: "Ex: 192.168.1.5" },
+
+    // User Menu
+    "menu.guest": { ja: "ゲストユーザー", en: "Guest User" },
+    "menu.account": { ja: "アカウント", en: "Account" },
+    "menu.usage_limit": { ja: "残り回数:", en: "Remaining:" },
+    "menu.monthly_usage": { ja: "今月の使用回数", en: "Monthly Usage" },
+    "menu.ends_on": { ja: "終了予定:", en: "Ends on:" },
+
+    // Usage Toast
+    "toast.usage": { ja: "残り使用回数：", en: "Remaining usage count:" },
+    "toast.guest": { ja: "残り使用回数(ゲスト)：", en: "Remaining usage (Guest):" },
 };
 
 interface LanguageContextType {

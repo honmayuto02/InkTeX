@@ -15,9 +15,13 @@ interface ResultDisplayProps {
     variant?: "floating" | "inline";
     compact?: boolean;
     className?: string;
+    usageInfo?: {
+        label: string;
+        remaining: number;
+    } | null;
 }
 
-export function ResultDisplay({ latex, onClose, onFeedback, variant = "floating", compact = false, className }: ResultDisplayProps) {
+export function ResultDisplay({ latex, onClose, onFeedback, variant = "floating", compact = false, className, usageInfo }: ResultDisplayProps) {
     const { t } = useLanguage();
     const [copied, setCopied] = React.useState(false);
     const [isEditing, setIsEditing] = React.useState(false);
@@ -169,7 +173,19 @@ export function ResultDisplay({ latex, onClose, onFeedback, variant = "floating"
 
             {/* Footer with Feedback Button - Fixed at bottom if needed */}
             {!compact && !isEditing && (
-                <div className="absolute bottom-0 left-0 right-0 p-2 bg-white/95 backdrop-blur border-t border-slate-100 flex justify-center z-10">
+                <div className={clsx(
+                    "absolute bottom-0 left-0 right-0 p-2 bg-white/95 backdrop-blur border-t border-slate-100 flex items-center z-10",
+                    usageInfo ? "justify-between px-4" : "justify-center"
+                )}>
+                    {usageInfo && (
+                        <div className="text-[10px] font-medium text-slate-500 flex items-center gap-1.5 bg-slate-50 px-2 py-1.5 rounded-md border border-slate-100">
+                            <span className="opacity-80">{usageInfo.label}</span>
+                            <span className={clsx("font-mono font-bold", usageInfo.remaining <= 5 ? "text-red-500" : "text-slate-700")}>
+                                {usageInfo.remaining}
+                            </span>
+                        </div>
+                    )}
+
                     <button
                         onClick={() => setIsEditing(true)}
                         className="text-xs text-slate-400 hover:text-slate-700 hover:bg-slate-50 rounded-full flex items-center justify-center gap-1 transition-colors px-4 py-1"

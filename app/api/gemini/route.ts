@@ -45,6 +45,48 @@ export async function POST(req: NextRequest) {
             );
         }
 
+        // --- Usage Limit Check (Start) ---
+        const authHeader = req.headers.get('Authorization');
+        let userId: string | null = null;
+        let isAdmin = false;
+
+        if (authHeader) {
+            try {
+                const token = authHeader.split(' ')[1];
+                const { createAdminClient, supabase } = await import("@/lib/supabase"); // Dynamic import to avoid circular dep if any (optional)
+
+                // Validate user
+                const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+
+                if (user && !authError) {
+                    userId = user.id;
+                    const admin = createAdminClient();
+
+                    // Check profile
+                    const { data: profile } = await admin
+                        .from('profiles')
+                        .select('subscription_tier, usage_count')
+                        .eq('id', userId)
+                        .single();
+
+                    if (profile) {
+                        const isPro = profile.subscription_tier === 'pro';
+                        const usage = profile.usage_count || 0;
+
+                        if (!isPro && usage >= 20) {
+                            return NextResponse.json(
+                                { error: "Free plan limit reached (20/20). Please upgrade to Pro." },
+                                { status: 402 }
+                            );
+                        }
+                    }
+                }
+            } catch (e) {
+                console.warn("Auth check failed:", e);
+            }
+        }
+        // --- Usage Limit Check (End) ---
+
         // Convert Blob to Base64 (Input)
         const buffer = Buffer.from(await image.arrayBuffer());
         const base64Image = buffer.toString("base64");
@@ -79,9 +121,16 @@ export async function POST(req: NextRequest) {
 
         const genAI = new GoogleGenerativeAI(apiKey);
 
-        // Model priority list for fallback
-        // PRIORITIZE FLASH models for speed.
-        const MODELS = ["gemini-2.5-flash", "gemini-2.5-pro", "gemini-2.5-flash-lite"];
+        // Model priority selection
+        const speedPref = req.headers.get("X-Model-Speed") || "fast";
+
+        // Fast: Flash -> Flash Lite -> Pro
+        let MODELS = ["gemini-3-flash-preview", "gemini-2.5-flash", "gemini-2.5-flash-lite", "gemini-2.5-pro"];
+
+        // If precise mode, prioritize Pro
+        if (speedPref === "precise") {
+            MODELS = ["gemini-3-flash-preview", "gemini-2.5-pro", "gemini-2.5-flash"];
+        }
 
         let lastError: any = null;
 
@@ -118,7 +167,36 @@ export async function POST(req: NextRequest) {
                 const cleanLatex = responseText.replace(/```latex|```/g, "").trim();
                 console.log(`Success with model: ${modelName}`);
 
-                return NextResponse.json({ latex: cleanLatex });
+                // --- Increment Usage (Start) ---
+                let newUsageCount: number | undefined;
+                let isPro = false;
+                if (userId) {
+                    try {
+                        const { createAdminClient } = await import("@/lib/supabase");
+                        const admin = createAdminClient();
+                        const { error } = await admin.rpc('increment_usage', { user_id: userId });
+
+                        if (error) {
+                            // Fallback if RPC doesn't exist (manual update)
+                            const { data: profile } = await admin.from('profiles').select('usage_count').eq('id', userId).single();
+                            if (profile) {
+                                await admin.from('profiles').update({ usage_count: (profile.usage_count || 0) + 1 }).eq('id', userId);
+                            }
+                        }
+
+                        // Fetch updated count for response
+                        const { data: updated } = await admin.from('profiles').select('usage_count, subscription_tier').eq('id', userId).single();
+                        if (updated) {
+                            newUsageCount = updated.usage_count;
+                            isPro = updated.subscription_tier === 'pro';
+                        }
+                    } catch (e) {
+                        console.error("Failed to increment usage:", e);
+                    }
+                }
+                // --- Increment Usage (End) ---
+
+                return NextResponse.json({ latex: cleanLatex, usage: newUsageCount, isPro });
 
             } catch (error: any) {
                 console.warn(`Model ${modelName} failed:`, error.message);

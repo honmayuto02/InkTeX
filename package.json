@@ -10,6 +10,8 @@
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
+    "@stripe/stripe-js": "^8.6.4",
+    "@supabase/supabase-js": "^2.91.1",
     "@types/uuid": "^10.0.0",
     "@vercel/kv": "^3.0.0",
     "clsx": "^2.1.1",
@@ -21,6 +23,7 @@
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "react-katex": "^3.1.0",
+    "stripe": "^20.2.0",
     "tailwind-merge": "^3.4.0",
     "uuid": "^13.0.0"
   },
