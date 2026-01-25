@@ -200,6 +200,9 @@ export default function Home() {
         const remaining = Math.max(0, 5 - next);
         nextUsageInfo = { label: t("toast.guest"), remaining };
       } else if (typeof data.usage === 'number') {
+        // Dispatch event for UserMenu update
+        window.dispatchEvent(new CustomEvent("inktex_user_usage_updated", { detail: { usage: data.usage } }));
+
         // Only show if NOT Pro and within limit
         if (!data.isPro && data.usage <= 20) {
           const remaining = Math.max(0, 20 - data.usage);
