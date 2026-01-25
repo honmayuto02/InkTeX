@@ -64,7 +64,7 @@ export const UserMenu = ({ variant = "dark" }: UserMenuProps) => {
                 .then(({ data }) => {
                     if (data) {
                         setUsage(data.usage_count);
-                        setTier(data.subscription_tier ? data.subscription_tier.toLowerCase() : null);
+                        setTier(data.subscription_tier ? data.subscription_tier.toLowerCase() : 'free');
                         setCancelAtEnd(data.cancel_at_period_end);
                         setEndDate(data.current_period_end);
                     }
