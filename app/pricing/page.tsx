@@ -2,6 +2,10 @@
 
 import React from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import Link from "next/link";
+import { Check, X, ArrowLeft, Star } from "lucide-react";
+import { useLanguage } from "@/components/contexts/LanguageContext";
+import { supabase } from "@/lib/supabase";
 
 export default function PricingPage() {
     const { t } = useLanguage();
