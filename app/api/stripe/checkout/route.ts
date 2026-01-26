@@ -102,7 +102,9 @@ export async function POST(req: NextRequest) {
                     supabaseUserId: user.id
                 }
             }
-        } as any);
+        } as any, {
+            apiVersion: '2024-06-20'
+        });
 
         return NextResponse.json({ url: session.url });
 
