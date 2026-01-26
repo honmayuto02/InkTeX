@@ -56,18 +56,6 @@ export default function PrivacyPage() {
                         <section>
                             <h2 className="text-xl md:text-2xl font-bold text-slate-800 mb-6 flex items-center gap-3">
                                 <span className="flex items-center justify-center w-8 h-8 rounded-full bg-blue-100 text-blue-600 text-sm font-bold">3</span>
-                                広告の配信について
-                            </h2>
-                            <p className="text-slate-600 leading-loose text-justify mb-4">
-                                当アプリは、第三者配信の広告サービス「<strong>Google Adsense</strong>」を利用しています。
-                                広告配信事業者は、ユーザーの興味に応じた広告を表示するためにCookieを使用することがあります。
-                                Googleアドセンスに関する詳細は<a href="https://policies.google.com/technologies/ads?hl=ja" target="_blank" rel="nofollow noopener noreferrer" className="text-blue-600 hover:underline">「Googleポリシーと規約 - 広告」</a>をご覧ください。
-                            </p>
-                        </section>
-
-                        <section>
-                            <h2 className="text-xl md:text-2xl font-bold text-slate-800 mb-6 flex items-center gap-3">
-                                <span className="flex items-center justify-center w-8 h-8 rounded-full bg-blue-100 text-blue-600 text-sm font-bold">4</span>
                                 免責事項
                             </h2>
                             <p className="text-slate-600 leading-loose text-justify">
@@ -78,7 +66,7 @@ export default function PrivacyPage() {
 
                         <section>
                             <h2 className="text-xl md:text-2xl font-bold text-slate-800 mb-6 flex items-center gap-3">
-                                <span className="flex items-center justify-center w-8 h-8 rounded-full bg-blue-100 text-blue-600 text-sm font-bold">5</span>
+                                <span className="flex items-center justify-center w-8 h-8 rounded-full bg-blue-100 text-blue-600 text-sm font-bold">4</span>
                                 お問い合わせ
                             </h2>
                             <p className="text-slate-600 leading-loose">

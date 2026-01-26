@@ -106,7 +106,7 @@ const translations: Dictionary = {
     "faq.title": { ja: "よくある質問 / FAQ", en: "FAQ" },
     "faq.subtitle": { ja: "InkTeXについて、よくいただくご質問にお答えします。", en: "Common questions about InkTeX." },
     "faq.q1": { ja: "無料で使えますか？", en: "Is it free?" },
-    "faq.a1": { ja: "はい、InkTeXは基本的に無料で利用可能です。手書き数式のLaTeX変換を回数制限なく（またはGemini APIの無料枠内で）試すことができます。", en: "Yes, InkTeX is basically free to use within the Gemini API free tier limits." },
+    "faq.a1": { ja: "はい、InkTeXは基本的に無料で利用可能です。無料プランでは月に20回まで数式変換を試すことができます。無制限に利用したい場合はProプランをご検討ください。", en: "Yes, InkTeX is basically free to use. The Free plan allows up to 20 conversions per month. For unlimited usage, please consider the Pro plan." },
     "faq.q2": { ja: "スマホやタブレットでも使えますか？", en: "Does it work on mobile/tablet?" },
     "faq.a2": { ja: "はい、完全レスポンシブ対応です。iPadなどのタブレットで手書き入力し、PCでコードを受け取るといった連携機能も備えています。", en: "Yes, it is fully responsive. You can also use the Device Sync feature to write on a tablet and receive code on PC." },
     "faq.q3": { ja: "どのような数式に対応していますか？", en: "What math is supported?" },
@@ -114,7 +114,10 @@ const translations: Dictionary = {
     "faq.q4": { ja: "読み取り精度を上げるコツはありますか？", en: "How to improve accuracy?" },
     "faq.a4": { ja: "「筆跡キャリブレーション機能（ペンツールアイコン）」を使って自分の字のクセを登録すると、AIの認識精度が大幅に向上します。", en: "Use the 'Calibration' feature (pen tool icon) to register your handwriting style for better accuracy." },
 
-    // Host Page
+    // Footer & Legal
+    "footer.privacy": { ja: "プライバシーポリシー", en: "Privacy Policy" },
+    "footer.terms": { ja: "利用規約", en: "Terms of Use" },
+    "footer.contact": { ja: "お問い合わせ", en: "Contact" },
     "host.title": { ja: "デバイス連携", en: "Device Sync" },
     "host.scan_qr": { ja: "QRコードを読み取って接続", en: "Scan QR code to connect" },
     "host.back": { ja: "戻る", en: "Back" },

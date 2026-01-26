@@ -412,6 +412,8 @@ export default function Home() {
         <div className="flex justify-center gap-6 mb-8 text-sm font-medium text-slate-600">
           <Link href="/privacy" className="hover:text-blue-600 transition-colors">{t("footer.privacy")}</Link>
           <span className="text-slate-300">|</span>
+          <Link href="/terms" className="hover:text-blue-600 transition-colors">{t("footer.terms")}</Link>
+          <span className="text-slate-300">|</span>
           <Link href="/contact" className="hover:text-blue-600 transition-colors">{t("footer.contact")}</Link>
         </div>
 
