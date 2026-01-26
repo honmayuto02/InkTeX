@@ -102,7 +102,7 @@ export async function POST(req: NextRequest) {
                     supabaseUserId: user.id
                 }
             }
-        });
+        } as any);
 
         return NextResponse.json({ url: session.url });
 
