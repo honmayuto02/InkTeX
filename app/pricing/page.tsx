@@ -1,16 +1,29 @@
 "use client";
 
 import React from "react";
-import Link from "next/link";
-import { Check, X, ArrowLeft, Star } from "lucide-react";
-import { useLanguage } from "@/components/contexts/LanguageContext";
-
-import { supabase } from "@/lib/supabase";
+import { useRouter, useSearchParams } from "next/navigation";
 
 export default function PricingPage() {
     const { t } = useLanguage();
+    const searchParams = useSearchParams();
+    const router = useRouter();
     const [tier, setTier] = React.useState<string>('free');
     const [loading, setLoading] = React.useState(true);
+
+    // Auto-checkout effect
+    React.useEffect(() => {
+        const autoCheckoutPlan = searchParams.get('auto_checkout');
+        if (autoCheckoutPlan && (autoCheckoutPlan === 'monthly' || autoCheckoutPlan === 'yearly')) {
+            supabase.auth.getSession().then(({ data: { session } }) => {
+                if (session) {
+                    // Slight delay to ensure UI is ready
+                    setTimeout(() => handleCheckout(autoCheckoutPlan), 500);
+                    // Clear param to prevent loop (optional, but good UX)
+                    // router.replace('/pricing'); 
+                }
+            });
+        }
+    }, [searchParams]);
 
     React.useEffect(() => {
         supabase.auth.getUser().then(({ data: { user } }) => {
@@ -30,9 +43,13 @@ export default function PricingPage() {
         try {
             const { data: { session } } = await supabase.auth.getSession();
             if (!session) {
+                // Redirect with auto_checkout param
+                const redirectUrl = new URL(window.location.href);
+                redirectUrl.searchParams.set('auto_checkout', plan);
+
                 const { error } = await supabase.auth.signInWithOAuth({
                     provider: 'google',
-                    options: { redirectTo: window.location.href }
+                    options: { redirectTo: redirectUrl.toString() }
                 });
                 if (error) alert("Login failed");
                 return;
