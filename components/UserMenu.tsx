@@ -68,19 +68,21 @@ export const UserMenu = ({ variant = "dark" }: UserMenuProps) => {
                         setCancelAtEnd(data.cancel_at_period_end);
                         setEndDate(data.current_period_end);
                     } else {
-                        // Retry once if profile might be creating
-                        if (!error) {
-                            setTimeout(() => {
-                                supabase.from('profiles').select('usage_count').eq('id', user.id).single()
-                                    .then(({ data: retryData }) => {
-                                        if (retryData) setUsage(retryData.usage_count ?? 0);
-                                    });
-                            }, 1000);
-                        }
-
-                        // Default
-                        setTier('free');
-                        setUsage(0);
+                        // Retry logic: profile might be creating or temporary RLS issue
+                        // Don't set usage to 0 immediately to avoid flickering "0"
+                        setTimeout(() => {
+                            supabase.from('profiles').select('usage_count, subscription_tier').eq('id', user.id).single()
+                                .then(({ data: retryData }) => {
+                                    if (retryData) {
+                                        setUsage(retryData.usage_count ?? 0);
+                                        setTier(retryData.subscription_tier ? retryData.subscription_tier.toLowerCase() : 'free');
+                                    } else {
+                                        // Final fallback if truly missing
+                                        setTier('free');
+                                        setUsage(0);
+                                    }
+                                });
+                        }, 1000);
                     }
                 });
         }
