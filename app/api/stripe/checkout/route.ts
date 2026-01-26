@@ -78,10 +78,6 @@ export async function POST(req: NextRequest) {
                 },
             ],
             mode: 'subscription',
-            allow_promotion_codes: true, // Enable coupons
-            automatic_payment_methods: {
-                enabled: true,
-            },
             success_url: `${returnUrl}?session_id={CHECKOUT_SESSION_ID}`,
             cancel_url: returnUrl,
             metadata: {
@@ -92,7 +88,7 @@ export async function POST(req: NextRequest) {
                     supabaseUserId: user.id
                 }
             }
-        } as any);
+        });
 
         return NextResponse.json({ url: session.url });
 
