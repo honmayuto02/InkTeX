@@ -68,8 +68,17 @@ export const UserMenu = ({ variant = "dark" }: UserMenuProps) => {
                         setCancelAtEnd(data.cancel_at_period_end);
                         setEndDate(data.current_period_end);
                     } else {
-                        // Fallback if profile doesn't exist yet (latency in trigger or error)
-                        console.warn("Profile missing, defaulting to free:", error);
+                        // Retry once if profile might be creating
+                        if (!error) {
+                            setTimeout(() => {
+                                supabase.from('profiles').select('usage_count').eq('id', user.id).single()
+                                    .then(({ data: retryData }) => {
+                                        if (retryData) setUsage(retryData.usage_count ?? 0);
+                                    });
+                            }, 1000);
+                        }
+
+                        // Default
                         setTier('free');
                         setUsage(0);
                     }
