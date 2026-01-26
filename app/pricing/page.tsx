@@ -1,13 +1,13 @@
 "use client";
 
-import React from "react";
+import React, { Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Check, X, ArrowLeft, Star } from "lucide-react";
 import { useLanguage } from "@/components/contexts/LanguageContext";
 import { supabase } from "@/lib/supabase";
 
-export default function PricingPage() {
+function PricingContent() {
     const { t } = useLanguage();
     const searchParams = useSearchParams();
     const router = useRouter();
@@ -253,5 +253,13 @@ function FeatureItem({ text, active, highlighted = false }: { text: string, acti
                 {text}
             </span>
         </div>
+    );
+}
+
+export default function PricingPage() {
+    return (
+        <Suspense fallback={<div className="min-h-screen bg-slate-50 flex items-center justify-center">Loading...</div>}>
+            <PricingContent />
+        </Suspense>
     );
 }
