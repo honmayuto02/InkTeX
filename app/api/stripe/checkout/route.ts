@@ -88,6 +88,10 @@ export async function POST(req: NextRequest) {
                 },
             ],
             mode: 'subscription',
+            allow_promotion_codes: true, // Enable coupons (for 100% off test)
+            automatic_payment_methods: {
+                enabled: true, // Enable Dashboard-configured methods (including PayPay if set)
+            },
             success_url: `${returnUrl}?session_id={CHECKOUT_SESSION_ID}`,
             cancel_url: returnUrl,
             metadata: {
