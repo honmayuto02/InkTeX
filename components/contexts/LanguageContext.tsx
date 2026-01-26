@@ -171,10 +171,6 @@ const translations: Dictionary = {
     "feature.copy.title": { ja: "爆速の自動コピー機能", en: "Instant Auto-Copy" },
     "feature.copy.desc": { ja: "変換完了と同時に、貼り付け準備OK。数式が変換された瞬間、クリップボードに自動でコピーされます。あとはOverleafやエディタに「貼り付け」するだけ。無駄なクリックをゼロに。", en: "Ready to paste instantly. Converted logic is automatically copied to your clipboard. Just paste into Overleaf or your editor. Zero wasted clicks." },
 
-    // Footer & Legal
-    "footer.privacy": { ja: "プライバシーポリシー", en: "Privacy Policy" },
-    "footer.contact": { ja: "お問い合わせ", en: "Contact" },
-
     // Buttons
     "btn.upgrade": { ja: "Proプランにアップグレード", en: "Upgrade to Pro" },
     "btn.login": { ja: "ログイン", en: "Login" },
