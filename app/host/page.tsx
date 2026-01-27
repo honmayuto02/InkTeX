@@ -330,9 +330,23 @@ export default function HostPage() {
                 addToHistory(apiData.latex, dataUrl, usageInfo);
 
                 if (autoCopy) {
+                    // Try to copy
                     navigator.clipboard.writeText(apiData.latex)
                         .then(() => setShowToast(t("result.copied")))
-                        .catch(e => console.error("Auto Copy Failed", e));
+                        .catch(async (e) => {
+                            console.error("Auto Copy Failed", e);
+
+                            // If background and failed, implies permission issue
+                            if (document.visibilityState === 'hidden') {
+                                // Try sending a notification if allowed
+                                if (Notification.permission === "granted") {
+                                    new Notification("InkTeX", {
+                                        body: t("result.copied_failed_bg") || "Background copy failed. Please enable Clipboard permissions in site settings.",
+                                        icon: "/favicon.ico"
+                                    });
+                                }
+                            }
+                        });
                 }
             } else if (apiData.error) {
                 setErrorMsg(`Error: ${apiData.error}`);

@@ -414,6 +414,8 @@ export default function Home() {
           <span className="text-slate-300">|</span>
           <Link href="/terms" className="hover:text-blue-600 transition-colors">{t("footer.terms")}</Link>
           <span className="text-slate-300">|</span>
+          <Link href="/legal/commercial" className="hover:text-blue-600 transition-colors">{t("footer.commercial")}</Link>
+          <span className="text-slate-300">|</span>
           <Link href="/contact" className="hover:text-blue-600 transition-colors">{t("footer.contact")}</Link>
         </div>
 

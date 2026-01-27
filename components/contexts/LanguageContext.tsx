@@ -41,6 +41,7 @@ const translations: Dictionary = {
     "result.title": { ja: "変換結果", en: "Result" },
     "result.copy": { ja: "コピー", en: "Copy" },
     "result.copied": { ja: "コピー完了", en: "Copied!" },
+    "result.copied_failed_bg": { ja: "自動コピーに失敗しました。サイトの設定で「クリップボード」を許可してください。", en: "Background copy failed. Allow 'Clipboard' in site settings." },
     "result.feedback_trigger": { ja: "結果が間違っている場合", en: "Report incorrect result" },
     "result.feedback_prompt": { ja: "正しいLaTeXを入力してください:", en: "Enter correct LaTeX:" },
     "result.feedback_submit": { ja: "AIに学習させる", en: "Teach AI" },
@@ -116,6 +117,7 @@ const translations: Dictionary = {
 
     // Footer & Legal
     "footer.privacy": { ja: "プライバシーポリシー", en: "Privacy Policy" },
+    "footer.commercial": { ja: "特定商取引法に基づく表記", en: "Legal / Commercial" },
     "footer.terms": { ja: "利用規約", en: "Terms of Use" },
     "footer.contact": { ja: "お問い合わせ", en: "Contact" },
     "host.title": { ja: "デバイス連携", en: "Device Sync" },
