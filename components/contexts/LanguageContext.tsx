@@ -244,7 +244,7 @@ interface LanguageContextType {
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
 
 export function LanguageProvider({ children }: { children: ReactNode }) {
-    const [lang, setLang] = useState<Language>("ja");
+    const [lang, setLang] = useState<Language>("en");
 
     React.useEffect(() => {
         const saved = localStorage.getItem("inktex_lang") as Language;
@@ -271,7 +271,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     const t = (key: string): string => {
         const entry = translations[key];
         if (!entry) return key;
-        return entry[lang] || entry["ja"];
+        return entry[lang] || entry["en"];
     };
 
     return (

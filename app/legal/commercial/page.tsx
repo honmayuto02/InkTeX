@@ -19,7 +19,7 @@ export default function CommercialPage() {
             </header>
 
             <main className="max-w-3xl mx-auto py-12 px-6">
-                <h1 className="text-3xl font-bold text-slate-900 mb-8">特定商取引法に基づく表記</h1>
+                <h1 className="text-3xl font-bold text-slate-900 mb-8">商取引に関する開示(特定商取引法に基づく表記)</h1>
 
                 <div className="space-y-8 text-slate-700 leading-relaxed">
                     <Section title="販売事業者名">
@@ -31,7 +31,7 @@ export default function CommercialPage() {
                     </Section>
 
                     <Section title="所在地">
-                        <p className="text-sm text-slate-500 mt-1">※ 請求があった場合、遅滞なく開示いたします。</p>
+                        <p className="text-sm text-slate-500 mt-1">請求があった場合、遅滞なく開示いたします。</p>
                     </Section>
 
                     <Section title="お問い合わせ先">
