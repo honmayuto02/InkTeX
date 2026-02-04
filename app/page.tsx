@@ -138,7 +138,7 @@ export default function Home() {
       // Guest Check
       if (!user) {
         const guestUsage = parseInt(localStorage.getItem("inktex_guest_usage") || "0", 10);
-        if (guestUsage >= 5) {
+        if (guestUsage >= 10) {
           throw new Error("LIMIT_REACHED");
         }
       }
@@ -197,7 +197,7 @@ export default function Home() {
         localStorage.setItem("inktex_guest_usage", String(next));
         window.dispatchEvent(new Event("inktex_guest_usage_updated"));
 
-        const remaining = Math.max(0, 5 - next);
+        const remaining = Math.max(0, 10 - next);
         nextUsageInfo = { label: t("toast.guest"), remaining };
       } else if (typeof data.usage === 'number') {
         // Dispatch event for UserMenu update

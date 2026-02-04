@@ -67,13 +67,29 @@ export async function POST(req: NextRequest) {
                     // Check profile
                     const { data: profile } = await admin
                         .from('profiles')
-                        .select('subscription_tier, usage_count')
+                        .select('subscription_tier, usage_count, last_reset_date')
                         .eq('id', userId)
                         .single();
 
                     if (profile) {
                         isPro = profile.subscription_tier === 'pro';
-                        const usage = profile.usage_count || 0;
+                        let usage = profile.usage_count || 0;
+                        const lastReset = profile.last_reset_date ? new Date(profile.last_reset_date) : new Date(0); // Epoch if null
+                        const now = new Date();
+
+                        // Check if new month
+                        if (lastReset.getMonth() !== now.getMonth() || lastReset.getFullYear() !== now.getFullYear()) {
+                            // Reset usage
+                            try {
+                                await admin.from('profiles').update({
+                                    usage_count: 0,
+                                    last_reset_date: now.toISOString()
+                                }).eq('id', userId);
+                                usage = 0; // Reset local variable for check below
+                            } catch (e) {
+                                console.error("Failed to reset monthly usage", e);
+                            }
+                        }
 
                         if (!isPro && usage >= 20) {
                             return NextResponse.json(
@@ -185,10 +201,17 @@ export async function POST(req: NextRequest) {
                     try {
                         const { createAdminClient } = await import("@/lib/supabase");
                         const admin = createAdminClient();
+
+                        // We use simple update + increment to avoid complex RPC logic if missing
+                        // First fetch again to be safe? Or just increment blindly?
+                        // Using RPC 'increment_usage' is best for concurrency, but if it doesn't support reset, we might have reset it 0 above.
+                        // If we reset it to 0 above, 'increment_usage' will make it 1. That is correct.
+                        // BUT if we rely on fallback, we must be careful.
+
                         const { error } = await admin.rpc('increment_usage', { user_id: userId });
 
                         if (error) {
-                            // Fallback
+                            // Fallback: Fetch current (which might have been reset to 0 in this same request) and increment
                             const { data: profile } = await admin.from('profiles').select('usage_count').eq('id', userId).single();
                             if (profile) {
                                 await admin.from('profiles').update({ usage_count: (profile.usage_count || 0) + 1 }).eq('id', userId);
