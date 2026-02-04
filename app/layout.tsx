@@ -46,8 +46,6 @@ export const viewport: Viewport = {
 
 import { LanguageProvider } from "@/components/contexts/LanguageContext";
 
-import { HeartbeatManager } from "@/components/HeartbeatManager";
-
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -59,7 +57,6 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <LanguageProvider>
-          <HeartbeatManager />
           {children}
         </LanguageProvider>
       </body>
