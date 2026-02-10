@@ -170,41 +170,13 @@ export default function HostPage() {
         setClientUrl(`${newOrigin}/client/${sessionId}`);
     };
 
-    // Poll for data
+    // Polling removed as per user request (suspected heartbeat issue)
+    /*
     useEffect(() => {
         if (!sessionId) return;
-
-        const interval = setInterval(async () => {
-            try {
-                const res = await fetch(`/api/sync?sessionId=${sessionId}`);
-                const data = await res.json();
-
-                if (data && data.lastUpdated > lastUpdated) {
-                    setLastUpdated(data.lastUpdated);
-                    if (data.imageData && data.imageData !== lastProcessedImageRef.current) {
-                        lastProcessedImageRef.current = data.imageData;
-                        processImage(data.imageData, data.calibrationData);
-                    }
-                    if (data.settings && typeof data.settings.autoCopy === 'boolean') {
-                        // Only update if different to avoid loop/flicker?
-                        // Actually, if remote changed, we should accept it.
-                        // But if we just toggled it locally, we don't want to revert before server confirms?
-                        // We rely on 'lastUpdated' to only process NEW changes.
-                        // But polling happens every 2s.
-                        // If we check `autoCopy !== data.settings.autoCopy`, then update.
-                        // We use `updateAutoCopy(val, false)` to NOT push back to server (prevent loop).
-                        if (autoCopy !== data.settings.autoCopy) {
-                            updateAutoCopy(data.settings.autoCopy, false);
-                        }
-                    }
-                }
-            } catch (e) {
-                console.error("Polling error", e);
-            }
-        }, 2000);
-
-        return () => clearInterval(interval);
+        // Polling logic removed
     }, [sessionId, lastUpdated]);
+    */
 
     // Helper: Retry API Call
     const callGeminiWithRetry = async (formData: FormData, retries = 3, delay = 1000): Promise<any> => {
