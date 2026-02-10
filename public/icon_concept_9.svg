@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Transparent Background -->
+  
+  <defs>
+    <filter id="shadow">
+      <feDropShadow dx="2" dy="4" stdDeviation="4" flood-opacity="0.2"/>
+    </filter>
+  </defs>
+
+  <g transform="translate(56, 56) scale(1.6)" fill="none" stroke="#28426d" stroke-width="24" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Lucide PenTool Stylized -->
+    <!-- m12 19 7-7 3 3-7 7-3-3z -->
+    <path d="M100 300 L 240 160 L 300 220 L 160 360 L 100 300 Z" fill="#28426d" stroke="none" />
+    
+    <!-- path d="m18 13-1.5-7.5L2 2l3.5 14.5L13 18l5-5" -->
+    <!-- Handle/Body -->
+    <path d="M240 160 L 360 40 L 420 100 L 300 220" stroke="#28426d" stroke-width="30" fill="#28426d" />
+    
+    <!-- Tip -->
+    <path d="M100 300 L 40 420 L 160 360" fill="#28426d" stroke="none"/>
+    <path d="M40 420 L 100 390 L 110 360" stroke="white" stroke-width="2" fill="none" opacity="0.3"/>
+    
+    <!-- Ink Circle/Line -->
+    <path d="M50 440 Q 80 480, 150 450" stroke="#28426d" stroke-width="20" stroke-linecap="round" />
+  </g>
+</svg>
