@@ -209,6 +209,7 @@ const translations: Dictionary = {
     "pricing.manage": { ja: "変更する", en: "Manage Subscription" },
     "pricing.duration.month": { ja: "/月", en: "/mo" },
     "pricing.duration.year": { ja: "/年", en: "/yr" },
+    "pricing.coming_soon": { ja: "準備中", en: "Coming Soon" },
 
     // Limit Modal
     "limit.title": { ja: "今月の無料枠を使い切りました", en: "Free Limit Reached" },

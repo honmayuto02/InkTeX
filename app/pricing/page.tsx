@@ -178,14 +178,10 @@ function PricingContent() {
                         </div>
 
                         <button
-                            onClick={() => tier !== 'pro' && handleCheckout('monthly')}
-                            disabled={tier === 'pro'}
-                            className={`w-full py-3 px-4 border-2 font-bold rounded-xl transition-all ${tier === 'pro'
-                                ? "bg-indigo-50 border-indigo-200 text-indigo-400 cursor-default"
-                                : "bg-white border-indigo-600 text-indigo-600 hover:bg-indigo-50"
-                                }`}
+                            disabled={true} // Configuration: Temporarily disabled
+                            className="w-full py-3 px-4 border-2 font-bold rounded-xl transition-all bg-slate-100 border-slate-200 text-slate-400 cursor-not-allowed"
                         >
-                            {tier === 'pro' ? t("pricing.current") : t("pricing.choose_monthly")}
+                            {t("pricing.coming_soon")}
                         </button>
                     </div>
 
@@ -217,14 +213,10 @@ function PricingContent() {
                         </div>
 
                         <button
-                            onClick={() => tier !== 'pro' && handleCheckout('yearly')}
-                            disabled={tier === 'pro'}
-                            className={`w-full py-3 px-4 font-bold rounded-xl shadow-lg transition-all ${tier === 'pro'
-                                ? "bg-slate-100 text-slate-400 shadow-none cursor-default"
-                                : "bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-500 hover:to-blue-500 text-white hover:shadow-indigo-500/30"
-                                }`}
+                            disabled={true} // Configuration: Temporarily disabled
+                            className="w-full py-3 px-4 font-bold rounded-xl shadow-none transition-all bg-slate-100 text-slate-400 cursor-not-allowed"
                         >
-                            {tier === 'pro' ? t("pricing.current") : t("pricing.choose_yearly")}
+                            {t("pricing.coming_soon")}
                         </button>
                     </div>
                 </div>
