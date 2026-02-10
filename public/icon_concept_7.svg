@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Transparent Background (No Rect) -->
+  
+  <defs>
+    <filter id="ink-glow">
+      <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <g transform="translate(20, 40)" fill="#28426d">
+    <!-- T -->
+    <path d="M40 80 L 200 80 L 200 120 L 140 120 L 140 380 Q 140 420, 130 460 Q 120 490, 140 490 Q 160 490, 150 460 L 160 380 L 160 120 L 100 120 L 100 80 Z" />
+    <!-- T Drip -->
+    <path d="M50 80 L 90 80 L 90 140 Q 90 170, 80 190 Q 70 210, 80 210 Q 90 210, 100 190 L 100 120" />
+
+    <!-- e -->
+    <path d="M220 250 Q 220 200, 260 200 L 320 200 Q 340 200, 340 230 L 340 260 L 240 260 Q 240 330, 280 330 Q 310 330, 320 300 L 330 310 Q 320 360, 280 360 Q 220 360, 220 280 Q 220 250, 220 250 Z M 240 240 L 320 240 L 320 230 Q 320 220, 280 220 Q 240 220, 240 240 Z" />
+    
+    <!-- X -->
+    <path d="M350 200 L 390 200 L 420 260 L 450 200 L 490 200 L 440 290 L 500 400 Q 510 430, 490 450 Q 470 470, 460 440 L 410 340 L 370 420 L 330 420 L 390 300 Z" />
+    <!-- X Drip -->
+     <circle cx="480" cy="480" r="10" />
+     <path d="M480 440 Q 475 460, 480 480 L 485 460 Z" />
+  </g>
+</svg>
