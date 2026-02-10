@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" fill="#28426d"/>
+  
+  <!-- Integral Symbol (White) -->
+  <path d="M200 150 C 180 150, 160 160, 160 190 C 160 220, 190 230, 200 260 L 220 320 C 230 350, 240 380, 220 380 C 200 380, 180 360, 180 340" stroke="white" stroke-width="25" fill="none" stroke-linecap="round"/>
+  
+  <!-- "TeX" Text -->
+  <text x="260" y="350" font-family="serif" font-size="120" fill="white" font-weight="bold">TeX</text>
+  
+  <!-- Pen Nib (Gold) -->
+  <path d="M320 100 L 360 200 L 400 100 Q 360 60, 320 100 Z" fill="#ffd700"/>
+  <rect x="358" y="100" width="4" height="60" fill="#28426d"/>
+</svg>
