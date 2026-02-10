@@ -4,6 +4,15 @@ import type { NextRequest } from 'next/server';
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
+  // Legacy Heartbeat Interception (Edge Level)
+  // Stops Serverless Function invocation for old clients polling this route
+  if (pathname === '/api/heartbeat') {
+    return new NextResponse(JSON.stringify({ status: 'ok' }), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' }
+    });
+  }
+
   // APIルートに対して GET メソッドでアクセスが来た場合（Botなど）
   // ただし /api/sync は GET でのポーリングや作成を行うため許可する
   if (pathname.startsWith('/api/') && request.method === 'GET' && !pathname.startsWith('/api/sync')) {
