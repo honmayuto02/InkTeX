@@ -1,0 +1,11 @@
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /host
+Disallow: /client
+
+# Prevent crawling of non-existent pages bots often look for
+Disallow: /home
+Disallow: /about
+Disallow: /admin
+Disallow: /login
