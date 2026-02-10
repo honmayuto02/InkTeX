@@ -7,14 +7,13 @@
     </filter>
   </defs>
 
-  <g transform="translate(56, 56) scale(1.6)" fill="none" stroke="#28426d" stroke-width="24" stroke-linecap="round" stroke-linejoin="round">
-    <!-- Lucide PenTool Stylized -->
-    <!-- m12 19 7-7 3 3-7 7-3-3z -->
-    <path d="M100 300 L 240 160 L 300 220 L 160 360 L 100 300 Z" fill="#28426d" stroke="none" />
-    
-    <!-- path d="m18 13-1.5-7.5L2 2l3.5 14.5L13 18l5-5" -->
+  <!-- Removed scale/translate that was causing clipping. Coordinates are naturally within 0-512 range. -->
+  <g fill="none" stroke="#28426d" stroke-width="24" stroke-linecap="round" stroke-linejoin="round">
     <!-- Handle/Body -->
     <path d="M240 160 L 360 40 L 420 100 L 300 220" stroke="#28426d" stroke-width="30" fill="#28426d" />
+    
+    <!-- Connector -->
+    <path d="M100 300 L 240 160 L 300 220 L 160 360 L 100 300 Z" fill="#28426d" stroke="none" />
     
     <!-- Tip -->
     <path d="M100 300 L 40 420 L 160 360" fill="#28426d" stroke="none"/>
