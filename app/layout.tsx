@@ -25,6 +25,10 @@ export const metadata: Metadata = {
     google: "PnqJIKgrLjaJWdQwMmXU0SRG-fJMWfDUafzW5DxwgBs",
   },
   manifest: "/manifest.json",
+  icons: {
+    icon: "/icon.svg",
+    apple: "/icon.svg",
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
