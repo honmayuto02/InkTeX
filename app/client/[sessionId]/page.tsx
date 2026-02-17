@@ -80,11 +80,7 @@ export default function ClientPage({ params }: { params: Promise<{ sessionId: st
             }
         };
 
-<<<<<<< HEAD
         const interval = setInterval(pollSettings, 60000);
-=======
-        const interval = setInterval(pollSettings, 500000);
->>>>>>> 3d445d049ca745ae1fe51bade8627222d5e76c4a
         return () => clearInterval(interval);
     }, [sessionId, lastSyncTime]);
 
