@@ -1,5 +1,7 @@
 # InkTeX
 
+![InkTeX Demo](public/demo.png)
+
 InkTeXは、Next.jsとGoogle Gemini APIを使用した、AI搭載の手書き数式 to LaTeX変換ツールです。
 デバイス連携機能を備えており、スマホやタブレットをPCのペンタブレット代わりに使用することができます。
 
