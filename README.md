@@ -7,7 +7,7 @@ InkTeXは、Next.jsとGoogle Gemini APIを使用した、AI搭載の手書き数
 
 ## 主な機能
 
-- **AIによる高精度変換**: 手書きの数式をGoogle Geminiモデル（デフォルト: `gemini-2.5-flash`）を使用してLaTeX形式に変換します。
+- **AIによる高精度変換**: 手書きの数式をGoogle Geminiモデル（デフォルト: `gemini-2.5`）を使用してLaTeX形式に変換します。
 - **デバイス連携モード (Device Sync)**:
   - **ホスト (PC)**: QRコードを表示してセッションを作成します。
   - **クライアント (スマホ/タブレット)**: QRコードを読み取ることで、手元の端末を入力デバイスとして使用できます。
@@ -28,7 +28,7 @@ InkTeXは、Next.jsとGoogle Gemini APIを使用した、AI搭載の手書き数
 
 1. リポジトリをクローンします:
    ```bash
-   git clone https://github.com/yourusername/inktex.git
+   git clone https://github.com/honmayuto02/inktex.git
    cd inktex
    ```
 
@@ -57,6 +57,6 @@ InkTeXは、Next.jsとGoogle Gemini APIを使用した、AI搭載の手書き数
 ## 使用技術
 
 - **フレームワーク**: Next.js 15 (App Router)
-- **AI**: Google Gemini API (`gemini-2.5-flash`)
+- **AI**: Google Gemini API (`gemini-2.5`)
 - **スタイリング**: Tailwind CSS
 - **数式レンダリング**: KaTeX
