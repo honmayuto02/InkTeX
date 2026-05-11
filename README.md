@@ -1,4 +1,4 @@
-# InkTeX　（※現在はAPIキーを設定していないため使用できません）
+# InkTeX　
 
 ![InkTeX Demo](public/demo.png)
 
