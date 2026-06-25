@@ -1,4 +1,4 @@
-# InkTeX　
+# InkTeX　（⚠️現在利用不可）
 
 ![InkTeX Demo](public/demo.png)
 
